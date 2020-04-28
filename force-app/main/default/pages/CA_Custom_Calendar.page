@@ -1,0 +1,11 @@
+<apex:page showHeader="true" showChat="false" sidebar="false">
+<SLCA2:calendar namespace="SLCA2"
+calendar=""
+createable=""
+urlparams=""
+view="swimlane"
+userAdditionalSettings="{'swimlaneDefaultPeriod':'day','swimlaneDefaultGroupBy':'00B36000005uPabEAE'}"
+>
+</SLCA2:calendar>
+ 
+</apex:page>

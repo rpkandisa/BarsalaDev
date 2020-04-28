@@ -1,0 +1,40 @@
+.THIS{
+    background-color: white !important;
+}
+.THIS.outerScroller {
+    /* fix innerScroller not scrollable */
+    border-radius: 1px;
+    height: 100%; 
+    width:100%;
+    background-color: white !important;
+    
+}
+
+/*this class applies to mobile app only to add extra space at bottom, 
+because some content was not visible*/
+.THIS.outerScroller .innerScroller {
+    /* make innerScroller rounded */
+    border-radius: 10px;
+    padding-bottom: 200px;
+}
+
+.THIS .noOverflow, .THIS.noOverflow{
+    overflow:unset !important;
+}
+
+.THIS ol, .THIS ul{
+    list-style: unset;
+}
+
+.THIS h1, .THIS h2, .THIS h3, .THIS h4, .THIS h5, .THIS h6, .THIS p, .THIS ol, .THIS ul, .THIS dl, .THIS fieldset {
+   /* margin: unset;*/
+}
+
+.THIS ol, .THIS ul{
+    margin: 16px 0px;
+    padding: 0px 0px 0px 40px;
+}
+
+.THIS.toggle {
+    display: none;
+}

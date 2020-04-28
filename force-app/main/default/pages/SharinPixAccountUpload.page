@@ -1,0 +1,18 @@
+<apex:page standardController="Account"> 
+    <apex:canvasApp developerName="Albums" namespacePrefix="sharinpix" height="500px" 
+        parameters="{ 
+        'Id': '{!$CurrentPage.parameters.Id}', 
+        abilities:{ 
+        '{!CASESAFEID($CurrentPage.Parameters.Id)}': 
+        { 
+        Access: { 
+        image_upload:true, 
+        image_list:true, 
+        see:true, 
+        image_delete:false 
+        } 
+        } 
+        } 
+        }" 
+    width="100%"/> 
+</apex:page>

@@ -1,0 +1,31 @@
+<apex:page showHeader="true" sidebar="false"  title="Extend Booking" >
+    <apex:includeLightning />
+    <apex:slds />
+
+    <style type="text/css">
+        #lightning {
+            width: 500px;
+            border: 1px solid rgb(217, 219, 221);
+            border-radius: .25rem;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        /*body, html .brandQuaternaryBgr {background:#fff !important;}*/
+        .slds-scope .brandQuaternaryBgr {background:#fff !important;}
+    </style>
+    <div id="lightning"  />
+
+    <script>
+        $Lightning.use("c:LTNG_AppForVF",function() {
+            $Lightning.createComponent("c:ExtendBooking",
+                {
+                    recordId : '{!$CurrentPage.parameters.bookId}',
+                    context : 'classic'
+                }, //------> Here i have passed the selected contact via value change. 
+                "lightning",
+                function(cmp) {
+                    // any further setup goes here
+            });         
+        });
+    </script>
+</apex:page>

@@ -1,0 +1,26 @@
+<apex:page standardController="Contact" recordSetVar="con" standardStylesheets="false">
+	<apex:pageMessages />
+	<apex:includeLightning />
+	<apex:stylesheet value="{!URLFOR($Resource.smagicinteract__LightningDatePicker,'')}"/>
+	<div id="lightning" />
+	<script>
+	var IdList = '{!selected}';
+	var objectName="Contact";
+	var mobileFields="";//If you want to enter multiple fields then please seperate by semi-colon.
+	var optOutField="";
+	var isOptOut=true;
+	var nameField = "";
+	var unrelatedObjects = "";//If you want to enter multiple objects then please seperate by semi-colon.
+	$Lightning.use("smagicinteract:BulkSMSApp",function() {
+		$Lightning.createComponent("smagicinteract:BulkSMSComponent",{
+			"IdList"				: IdList,
+			"objectName"			: objectName,
+			"mobileFields"		: mobileFields,
+			"optOutField"		: optOutField,
+			"optOutCheckBox"		: isOptOut,
+			"nameField"			: nameField,
+			"unrelatedObjects"	: unrelatedObjects
+		},"lightning",function(cmp) {});
+	});
+	</script>
+</apex:page>

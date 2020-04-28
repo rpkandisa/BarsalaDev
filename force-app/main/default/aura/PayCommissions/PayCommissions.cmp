@@ -1,0 +1,312 @@
+<aura:component
+  implements="flexipage:availableForRecordHome,force:hasRecordId,force:lightningQuickActionWithoutHeader"
+  access="global"
+  controller="PayCommissionController"
+>
+  <aura:attribute name="recordId" type="Id" />
+  <aura:attribute name="accountName" type="String" />
+
+  <aura:attribute name="isRecordExists" type="Boolean" default="false" />
+
+  <aura:attribute name="Ihavesendpayment" type="Boolean" />
+  <aura:attribute
+    name="options"
+    type="List"
+    default="[
+    {'label': 'Approved', 'value': 'approved'},
+    {'label': 'Rejected', 'value': 'rejected'}
+    ]"
+  />
+
+  <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+  <aura:attribute
+    name="bookingList"
+    type="PayCommissionController.wrpPayCommission[]"
+  />
+
+  <aura:attribute
+    name="UpdatedbookingList"
+    type="PayCommissionController.wrpPayCommission[]"
+  />
+
+  <aura:attribute name="showPopup" type="Boolean" />
+  <aura:attribute
+    name="disapproveObj"
+    type="PayCommissionController.wrpPayCommission"
+  />
+  <aura:attribute
+    name="BookingToUpdate"
+    type="PayCommissionController.wrpPayCommission[]"
+  />
+
+  <aura:attribute name="CommisionAmount" type="String" />
+  <aura:attribute name="showAmount" type="Boolean" default="False" />
+  <aura:handler
+    name="PayCommissionEvent"
+    event="c:PayCommissionEvent"
+    action="{!c.handleEvent}"
+  />
+
+  <aura:attribute name="Spinner" type="boolean" default="false" />
+  <aura:handler event="aura:waiting" action="{!c.showSpinner}" />
+  <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}" />
+  <!--loading spinner start... style=Brand Medium (blue dots)-->
+  <aura:if isTrue="{!v.Spinner}">
+    <div aura:id="spinnerId" class="slds-spinner_container">
+      <div
+        class="slds-spinner_brand  slds-spinner slds-spinner_large slds-is-relative"
+        role="alert"
+      >
+        <span class="slds-assistive-text">Loading</span>
+        <div class="slds-spinner__dot-a"></div>
+        <div class="slds-spinner__dot-b"></div>
+      </div>
+    </div>
+  </aura:if>
+  <!-- Loading spinner end-->
+
+  <div class="slds-m-horizontal_small">
+    <lightning:card title="{!v.accountName}" iconName="standard:person_account">
+      <aura:set attribute="actions">
+        <aura:if isTrue="{!v.showAmount}">
+          <lightning:buttonGroup>
+            <aura:if isTrue="{!v.Ihavesendpayment}">
+              <lightning:button
+                variant="brand"
+                label="Finish"
+                onclick="{!c.handleClickOnFinish}"
+                class="slds-m-left_xx-large slds-m-top_small"
+              />
+
+              <aura:set attribute="else">
+                <lightning:button
+                  variant="brand"
+                  label="Finish"
+                  disabled="true"
+                  class="slds-m-left_xx-large slds-m-top_small"
+                />
+              </aura:set>
+            </aura:if>
+
+            <lightning:button
+              label="Back"
+              variant="Neutral"
+              class="slds-m-left_xx-large slds-m-top_small"
+              onclick="{!c.gotoBack}"
+            />
+          </lightning:buttonGroup>
+
+          <aura:set attribute="else">
+            <aura:if isTrue="{!v.isRecordExists}">
+              <lightning:button
+                label="Back"
+                variant="Neutral"
+                class="slds-m-left_xx-large slds-m-top_small"
+                onclick="{!c.gotoBackOnLoad}"
+              />
+              <aura:set attribute="else">
+                <lightning:button
+                  variant="brand"
+                  label="Complete Review"
+                  onclick="{!c.completereview}"
+                  class="slds-m-left_xx-large slds-m-top_small"
+                />
+              </aura:set>
+            </aura:if>
+          </aura:set>
+        </aura:if>
+      </aura:set>
+    </lightning:card>
+
+    <div class="slds-m-vertical_small">
+      <div aura:id="errormsg"></div>
+    </div>
+
+    <aura:if isTrue="{!v.showAmount}">
+      <div class="slds-form">
+        <div class="slds-form-element slds-form-element_horizontal">
+          <label class="slds-form-element__label" for="horizontal-input-id-01"
+            >Commission Amount</label
+          >
+          <div class="slds-form-element__control">
+            <lightning:formattedNumber
+              value="{!v.CommisionAmount}"
+              style="currency"
+              currencyCode="USD"
+            />
+          </div>
+        </div>
+        <div class="slds-form-element slds-form-element_horizontal">
+          <label class="slds-form-element__label" for="horizontal-input-id-01"
+            >I've sent payment to the person</label
+          >
+          <div class="slds-form-element__control">
+            <lightning:input
+              type="checkbox"
+              variant="label-hidden"
+              checked="{!v.Ihavesendpayment}"
+              name="input1"
+            />
+          </div>
+        </div>
+      </div>
+
+      <aura:set attribute="else">
+        <aura:if isTrue="{!v.isRecordExists}">
+          <div class="slds-align_absolute-center slds-m-top_medium">
+            <table
+              class="slds-table slds-table_bordered slds-max-medium-table_stacked-horizontal"
+            >
+              <thead>
+                <tr class="slds-box slds-text-title_caps">
+                  <th scope="col" class="slds-cell-shrink slds-cell-wrap">
+                    <span><i>No Record(s) found.</i></span>
+                  </th>
+                </tr>
+              </thead>
+            </table>
+          </div>
+
+          <aura:set attribute="else">
+            <div class="slds-align_absolute-center slds-m-top_medium">
+              <table
+                class="slds-table slds-table_bordered slds-max-medium-table_stacked-horizontal"
+              >
+                <thead>
+                  <tr class="slds-box slds-text-title_caps">
+                    <th scope="col" class="slds-cell-shrink slds-cell-wrap">
+                      <span>Aprrove/Reject</span>
+                    </th>
+                    <th scope="col" class="slds-col slds-cell-wrap">
+                      <span>Rejected Comment</span>
+                    </th>
+                    <th scope="col" class="slds-col slds-cell-wrap">
+                      <span>Booking Name</span>
+                    </th>
+                    <th scope="col" class="slds-col slds-cell-wrap">
+                      <span>Unit</span>
+                    </th>
+                    <th scope="col" class="slds-col slds-cell-wrap">
+                      <span>Start Date</span>
+                    </th>
+                    <th scope="col" class="slds-col slds-cell-wrap">
+                      <span>End Date</span>
+                    </th>
+                    <th scope="col" class="slds-col slds-cell-wrap">
+                      <span>Guest Contact</span>
+                    </th>
+                    <th scope="col" class="slds-col slds-cell-wrap">
+                      <span>Status</span>
+                    </th>
+                    <th scope="col" class="slds-col slds-cell-wrap">
+                      <span>Total Tax</span>
+                    </th>
+                    <th scope="col" class="slds-col slds-cell-wrap">
+                      <span>Commission Amount</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <aura:iteration
+                    items="{!v.bookingList}"
+                    var="book"
+                    indexVar="index"
+                    aura:id="AllBookings"
+                  >
+                    <tr scope="slds-hint-parent">
+                      <td scope="col" class="slds-col slds-cell-wrap">
+                        <lightning:radioGroup
+                          name="{!book.bookingid}"
+                          label="Approve/DisApprove"
+                          options="{!v.options}"
+                          value="{!book.approverejectstatus}"
+                          type="button"
+                          variant="label-hidden"
+                          onclick="{! c.onapproverejectchange }"
+                          onchange="{! c.onapproverejectchange }"
+                        />
+                      </td>
+                      <td scope="col" class="slds-col slds-cell-wrap">
+                        <span>{!book.reason}</span>
+                      </td>
+                      <td scope="col" class="slds-col ">
+                        <span>
+                          <a
+                            href="{! '/' + book.bookingid}"
+                            title="{!book.bookingname}"
+                            target="_blank"
+                            >{!book.bookingname}</a
+                          >
+                        </span>
+                      </td>
+                      <td scope="col" class="slds-col slds-cell-wrap">
+                        <span>{!book.unitname}</span>
+                      </td>
+                      <td scope="col" class="slds-col ">
+                        <span>{!book.startdate}</span>
+                      </td>
+                      <td scope="col" class="slds-col ">
+                        <span>{!book.enddate}</span>
+                      </td>
+                      <td scope="col" class="slds-col ">
+                        <span>{!book.guestname}</span>
+                      </td>
+                      <td scope="col" class="slds-col ">
+                        <span>{!book.status}</span>
+                      </td>
+                      <td scope="col" class="slds-col ">
+                        <span
+                          ><lightning:formattedNumber
+                            value="{!book.totaltax}"
+                            style="currency"
+                            currencyCode="USD"
+                          />
+                        </span>
+                      </td>
+                      <td scope="col" class="slds-col ">
+                        <span
+                          ><lightning:formattedNumber
+                            value="{!book.commissionamount}"
+                            style="currency"
+                            currencyCode="USD"
+                        /></span>
+                      </td>
+                    </tr>
+                  </aura:iteration>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="slds-clearfix">
+              <!-- <div class="slds-float_right"> -->
+              <lightning:card>
+                <aura:set attribute="actions">
+                  <aura:if isTrue="{!v.isRecordExists}">
+                    <aura:set attribute="else">
+                      <lightning:button
+                        variant="brand"
+                        label="Complete Review"
+                        onclick="{!c.completereview}"
+                        class="slds-m-left_xx-large slds-m-top_small"
+                      />
+                    </aura:set>
+                  </aura:if>
+                </aura:set>
+              </lightning:card>
+
+              <!-- </div> -->
+            </div>
+          </aura:set>
+        </aura:if>
+      </aura:set>
+    </aura:if>
+
+    <aura:if isTrue="{!v.showPopup}">
+      <c:PayCommissionsChild
+        ChildShowPopup="{!v.showPopup}"
+        ChildDisapproveObj="{!v.disapproveObj}"
+        ChildrecordId="{!v.recordId}"
+      />
+    </aura:if>
+  </div>
+</aura:component>

@@ -1,0 +1,164 @@
+<aura:component controller="AddExternalUserWizardCtrl" implements="force:appHostable,flexipage:availableForAllPageTypes" access="global" >
+    
+    <aura:attribute name="UserType" type="String" />
+    <aura:attribute name="isDuplicateEmailId" type="boolean" default="false"/>
+    <aura:attribute name="UserWrap" type="AddExternalUserWizardCtrl.ExternalUserWrapper" />
+    <aura:attribute name="ResponseMessage" type="AddExternalUserWizardCtrl.ResponseMessage" />
+    <aura:handler name="init" value="{!this}" action="{!c.initialize}"/>
+    
+    <!-- for Spinner -->
+    <aura:attribute name="Spinner" type="boolean" default="false"/>
+    <aura:handler event="aura:waiting" action="{!c.showSpinner}"/>
+    <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}"/>
+    
+    <!--loading spinner start... style=Brand Medium (blue dots)-->
+    <aura:if isTrue="{!v.Spinner}">
+        <div aura:id="spinnerId" class="slds-spinner_container">
+            <div class="slds-spinner--brand  slds-spinner slds-spinner--large slds-is-relative" role="alert">
+                <span class="slds-assistive-text">Loading</span>
+                <div class="slds-spinner__dot-a"></div>
+                <div class="slds-spinner__dot-b"></div>
+            </div>
+        </div>
+    </aura:if>
+    
+    
+    
+    <div class="slds-m-top_x-small slds-align_absolute-center">
+        <div class="slds-card">
+            
+            <div class="slds-m-around_small  ">
+                <div class="slds-text-heading_large slds-align_absolute-center ">
+                    <span>Add External User Wizard</span>
+                </div>
+                
+                <div class="slds-grid slds-wrap slds-m-top_x-small ">
+                    <div class="slds-col slds-size_6-of-12 slds-p-around_xx-small">
+                        <span><lightning:select name="selectUserType" label="Select type of external user" onchange="{!c.getUser}" value="{!v.UserType}" required="true">
+                           
+                            <option value="Housekeeping">Housekeeping</option>
+                            <option value="Owner">Owner</option>
+                            </lightning:select></span>
+                    </div>
+                    <div class="slds-col slds-size_6-of-12 slds-p-around_xx-small">
+                        <span></span>
+                    </div>
+                </div>
+                
+                <aura:if isTrue="{!not(v.UserWrap.isHousekeeper)}">
+                    <div class="slds-grid slds-wrap slds-m-top_x-small">
+                        <div class="slds-col slds-size_6-of-12 slds-p-around_xx-small">
+                            <span><c:Lookup
+                                            fieldLabel="Building"
+                                            objectAPIName="Building__c"
+                                            subHeadingFieldsAPI="City__c"
+                                            placeholder="Search Building"
+                                            iconCategoryNameSymbol="custom:custom24"
+                                            chosenRecordId="{!v.UserWrap.buildingId}"
+                                            isRequired="true"
+                                            chosenRecordLabel="{!v.UserWrap.buildingName}"
+                                            /></span>
+                        </div>
+                        <div class="slds-col slds-size_6-of-12 slds-p-around_xx-small">
+                        </div>
+                    </div>
+                </aura:if>
+                
+                <div class="slds-grid slds-wrap slds-m-top_x-small ">
+                    <div class="slds-col slds-size_6-of-12 slds-p-around_xx-small">
+                        <span>
+                            <lightning:input name="name" label="Name" value="{!v.UserWrap.name}" required="{!v.UserWrap.isHousekeeper}" />
+                        </span>
+                    </div>
+                    <div class="slds-col slds-size_6-of-12 slds-p-around_xx-small">
+                        <span>
+                            <lightning:input type="email" label="Email" name="email1" value="{!v.UserWrap.email}" required="true"/>
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="slds-grid slds-wrap slds-m-top_x-small">
+                    <div class="slds-col slds-size_6-of-12 slds-p-around_xx-small">
+                        <span>
+                            <lightning:input type="tel" label="Phone" name="phone" value="{!v.UserWrap.phone}" />
+                        </span>
+                    </div>
+                    <div class="slds-col slds-size_6-of-12 slds-p-around_xx-small">
+                        <span>
+                            <c:Lookup
+                                      fieldLabel="City"
+                                      objectAPIName="City__c"
+                                      subHeadingFieldsAPI=""
+                                      placeholder="Search City"
+                                      iconCategoryNameSymbol="custom:custom68"
+                                      chosenRecordId="{!v.UserWrap.cityId}"
+                                      isRequired="{!v.UserWrap.isHousekeeper}"
+                                      chosenRecordLabel="{!v.UserWrap.cityName}"
+                                      />
+                        </span>
+                    </div>
+                </div>
+                
+                
+                <aura:if isTrue="{!v.UserWrap.isHousekeeper}">
+                    <div class="slds-grid slds-wrap slds-m-top_x-small">
+                        <div class="slds-col slds-size_6-of-12 slds-p-around_xx-small">
+                            <span>
+                                <lightning:input name="1bdrate" label="1BDRate" value="{!v.UserWrap.x1BDRate}" />
+                            </span>
+                        </div>
+                        <div class="slds-col slds-size_6-of-12 slds-p-around_xx-small">
+                            <span>
+                                <lightning:input name="2bdrate" label="2BDRate" value="{!v.UserWrap.x2BDRate}" />
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="slds-grid slds-wrap slds-m-top_x-small ">
+                        <div class="slds-col slds-size_6-of-12 slds-p-around_xx-small">
+                            <span>
+                                <lightning:input name="3bdrate" label="3BDRate" value="{!v.UserWrap.x3BDRate}" />
+                            </span>
+                        </div>
+                        <div class="slds-col slds-size_6-of-12 slds-p-around_xx-small">
+                            <span></span>
+                        </div>
+                    </div>
+                    
+                    <div class="slds-grid slds-wrap slds-m-top_x-small">
+                        <div class="slds-col slds-size_6-of-12 slds-p-around_xx-small">
+                            <span>
+                                <lightning:input name="deepclean" label="Deep Clean Rate Premium" value="{!v.UserWrap.deepCleanRatePremium}" />
+                            </span>
+                        </div>
+                        <div class="slds-col slds-size_6-of-12 slds-p-around_xx-small">
+                            <span>
+                                <lightning:input name="studiorate" label="Studio Rate" value="{!v.UserWrap.studioRate}" />
+                            </span>
+                        </div>
+                    </div>
+                    
+                    
+                </aura:if>
+                
+                
+                <div class="slds-align_absolute-center slds-m-top_x-small">
+                    <span>
+                        <lightning:button variant="brand" 
+                                          label="Add External User" 
+                                          title="Add External User" 
+                                          onclick="{! c.doValidation }" />
+                    </span>
+                </div>
+                
+                
+            </div>
+        </div>
+    </div>
+    
+    
+    
+    
+    
+    
+</aura:component>

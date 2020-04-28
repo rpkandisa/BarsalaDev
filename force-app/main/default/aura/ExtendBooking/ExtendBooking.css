@@ -1,0 +1,162 @@
+.THIS .slds-item--label{
+    width: 52% !important;
+}
+.THIS .slds-item--detail{
+    width: 48% !important;
+}
+div.modal-body.THIS{
+    position: relative !important;
+}
+@media (min-width: 768px){
+    .THIS .cancel{
+        margin-left: -60px;
+    }
+}
+.THIS .nolabel .slds-form-element__label{
+    display: none;
+}
+.THIS .nolabel .slds-input{
+    width: 100px;
+    min-height: 10px;
+    height: 25px;
+    padding-left: 7px;
+    padding-right: 7px;
+}
+.THIS input::-webkit-outer-spin-button,
+.THIS input::-webkit-inner-spin-button {
+    /* display: none; <- Crashes Chrome on hover */
+    -webkit-appearance: none;
+    margin: 0; /* <-- Apparently some margin are still there even though it's hidden */
+}
+.THIS .slds-grid+.slds-grid {
+    margin-top: 0.5rem;
+}
+
+.THIS .slds-radio_button [type=radio]+.slds-radio_button__label{
+    background-color: #FFF !important;
+    color: #227E8A !important;
+    text-transform: uppercase !important;
+    font-family: 'Open Sans', sans-serif !important;
+    font-size:13px !important;
+}
+
+.THIS .slds-datepicker td.slds-is-selected:not(.slds-disabled-text)>.slds-day {
+    background-color: #227E8A !important;
+    color: #fff;
+}
+.THIS .slds-button.slds-button_icon-container, .THIS .slds-button.slds-button_icon-bare{
+    color: #71AEBB !important;
+}
+
+
+.THIS .slds-radio_button [type=radio]:checked+.slds-radio_button__label{
+    /*background-color: rgb(118, 158, 218) !important;*/
+    /*background-color:rgb(98, 135, 191) !important;*/
+    /*background-color: rgba(98, 191, 109, 0.92) !important;
+    color:  rgb(255, 255, 255) !important;*/
+
+    background-color: #227E8A !important;
+    color: #FFF !important;
+    
+}
+.THIS .slds-radio_button [type=radio]:not(:checked)+.slds-radio_button__label:hover{
+    background-color: rgb(244, 246, 249) !important;
+    /*background-color: #1D6C78 !important;*/
+}
+.THIS .slds-grid+.slds-grid {
+    margin-top: 0.5rem;
+}
+.THIS .slds-radio_button__label{
+    border: 1px solid #ccc;
+    border-radius: 0.25rem !important;
+    color: rgb(0, 112, 210) !important;
+}
+.THIS .radioLabel{
+    padding: 0px !important;
+}
+
+.THIS .uiBlock .bBody{
+    white-space:pre-wrap;
+}
+.THIS .alignRight input{
+    text-align:right;
+}
+
+/*.cExtendBooking{
+    font-family: lato !important;
+}*/
+
+.THIS .slds-button.slds-button_brand{
+    background-color: #227E8A !important;
+    color: #FFF !important;
+    text-transform: uppercase !important;
+    font-family: Lato !important;
+}
+.THIS .slds-button.slds-button_brand:disabled, .THIS .slds-button.slds-button_brand:disabled:hover{
+    background-color: #71AEBB !important;
+}
+
+.THIS .slds-button.slds-button_brand:hover{
+    background-color: #1D6C78 !important;
+}
+
+.THIS .slds-button.slds-button_neutral{
+    background-color: #EAF5F4 !important;
+    color: #1D6C78 !important;
+    text-transform: uppercase !important;
+    font-family: Lato !important;
+}
+
+.THIS .slds-button.slds-button_neutral:hover{
+    background-color: #FAFAFA !important;
+}
+
+.THIS.outerScroller {
+    /* fix innerScroller not scrollable */
+    border-radius: 1px;
+height: 100%; 
+width:100%;
+    background-color: white ;
+}
+/*this class applies to mobile app only to add extra space at bottom, 
+because some content was not visible*/
+.THIS.outerScroller .innerScroller {
+    /* make innerScroller rounded */
+    border-radius: 10px;
+    padding-bottom: 100px;
+}
+
+.THIS .noOverflow, .THIS.noOverflow{
+    overflow:unset !important;
+}
+
+.cExtendBooking{
+    font-family: 'Open Sans', sans-serif !important;
+}
+
+/*.THIS .slds-text-heading_small, .THIS h1, .THIS h2, .THIS h3, .THIS h4, .THIS h5, .THIS h6{
+    font-family: 'Lato Light', sans-serif !important;
+    font-size:16px;
+}*/
+
+.THIS .inputStyle, .THIS .slds-form-element__label{
+    font-family: 'Open Sans', sans-serif !important;
+    font-size:13px !important;
+}
+.THIS .buttonBrand{
+    font-size:12px;
+}
+.THIS .buttonNeutral{
+    font-size:12px;
+}
+.THIS .headingStyle .slds-text-heading_small, .THIS .headingStyle h1,.THIS .headingStyle h2,.THIS .headingStyle h3,.THIS .headingStyle h4,.THIS .headingStyle h5,.THIS .headingStyle h6{
+    font-family: 'Lato Light', sans-serif;
+    color: #227E8A;
+    font-size:16px;
+    text-transform: uppercase !important;
+}
+
+.THIS .detailStyle{
+    font-family: 'Open Sans', sans-serif !important;
+    font-size:13px;
+}

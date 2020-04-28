@@ -1,0 +1,2159 @@
+<apex:page title="Unit Booking Wizard" id="pgId" standardStylesheets="false" controller="UnitBookingByOwnerController" showHeader="{!if($User.UIThemeDisplayed == 'Theme4t', false,true)}" sidebar="false" docType="html-5.0" cache="false" action="{!validateUser}">
+    <apex:slds />
+    <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" oncontextmenu="return false">
+
+        <head>
+            <!-- added by Tarun-Kandsa - May 22, 2019-->
+            <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.fancybox,'/fancybox/jquery.fancybox.min.css')}" />
+        </head>
+
+        <script src="https://js.stripe.com/v3/"></script>
+    
+        <!--<apex:stylesheet value="{!URLFOR($Resource.lightning, '/assets/styles/salesforce-lightning-design-system-vf.min.css')}"/>
+        -->
+        <apex:variable value="{!if($User.UIThemeDisplayed == 'Theme4t', true,false)}" var="UserisOnSalesforce1"/>
+        <meta charset="utf-8" />
+        <meta http-equiv="x-ua-compatible" content="ie=edge"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1,minimum-scale=1, maximum-scale=1, user-scalable=no"/>
+        
+        <apex:outputPanel rendered="{!UserisOnSalesforce1}">
+            <script> 
+                (function(){
+                    try{
+                        var a=navigator.userAgent; 
+                        if((a.indexOf('Salesforce')!=-1)&&(a.indexOf('iPhone')!=-1||a.indexOf('iPad')!=-1)){
+                            var s=document.createElement('style'); 
+                            s.innerHTML="html,html body{overflow: auto;-webkit-overflow-scrolling:touch;}body{position:absolute;left:0;right:0;top:0;bottom:0;}"; 
+                            document.getElementsByTagName('head')[0].appendChild(s);
+                        }
+                    }catch(e){}
+                })(); 
+            </script>
+            
+            <style>
+                body {
+                    background-color:white !important;
+                }
+
+                .slds-scope .slds-list--horizontal .slds-item--label {
+                    width:50% !important;
+                }
+                .slds-scope .slds-list--horizontal .slds-item--detail {
+                    width:50% !important;
+                }
+                .slds-scope .slds-p-left--x-large {
+                    padding-left:1.5rem !important;
+                }
+                .slds-scope .slds-notify--toast, .slds-scope .slds-notify_toast {
+                    min-width:15rem !important;
+                    margin-left:0px;
+                }
+                #guestMessagePanel {
+                    height:6rem !important;
+                }
+                
+                .slds-datepicker.slds-dropdown.slds-dropdown--left {
+                    position: absolute !important;
+                }                
+                
+                #ulavailableunits,#bookingContent,#paymentContent { margin:0 0 50px 0; }
+                
+                @media (max-device-width : 400px) {
+                    .btnNextToPayment {
+                        margin-left:0px !important; 
+                        margin-top:5px !important;
+                        margin-bottom:10px !important;
+                    }
+                }
+
+            </style>
+        </apex:outputPanel>
+        <apex:outputPanel rendered="{!$User.UIThemeDisplayed == 'Theme4d' || $User.UIThemeDisplayed == 'Theme3'}">
+            <style>
+                
+                 .slds-scope .slds-notify--toast, .slds-scope .slds-notify_toast{
+                    min-width:25rem !important;
+                    margin: .5rem 0 !important;
+                }
+                .slds-input-has-icon .slds-input__icon {
+                    fill: #54698d !important;
+                }
+                .hasMotif.homeTab.sfdcBody.brandQuaternaryBgr.slds-scope { background:#fff !important; }
+
+                .slds-datepicker.slds-dropdown.slds-dropdown--left {
+                    position: absolute !important;
+                } 
+
+                dt.slds-item--label.slds-text-color--weak {
+                    padding-right: 0!important;
+                }
+                
+                html, body { height: 95%; overflow-y: hidden !important; }
+
+                /* ::-webkit-scrollbar {display:none;} */
+                /* html body.sfdcBody{overflow-y:-webkit-paged-y !important;} */
+
+                /*html .brandQuaternaryBgr {background:#fff !important;}
+                
+                .slds-datepicker.slds-dropdown.slds-dropdown--left {
+                    position: relative !important;
+                } */
+                
+            </style>
+        </apex:outputPanel>
+        
+        
+        <body class="scroll-pane" >
+        
+        
+            <apex:outputPanel rendered="{! !userModel.isBookingAllowed}">
+                <div id="permissionErrorPanel" style="height: 4rem;">
+                    <div class="slds-notify_container slds-is-relative">
+                        <div class="slds-theme_error slds-notify slds-notify_toast slds-size--1-of-1 slds-medium-size--4-of-5" role="alert">
+                            <span class="slds-theme_error slds-assistive-text">error</span>
+                            <span class="slds-icon_container slds-icon-utility-error slds-m-right_small slds-no-flex slds-align-top" title="Description of icon when needed">
+                                <svg class="slds-icon slds-icon_small" aria-hidden="true">
+                                    <use id="guestMessageIcon" xlink:href="{!URLFOR($Resource.lightning, 'assets/icons/utility-sprite/svg/symbols.svg#error')}" />
+                                </svg>
+                            </span>
+                            <div class="slds-notify__content">
+                                <h2 class="slds-text-heading_small">Currently you do not have permissions to make booking using this wizard. <b>Please contact customer support at +1 (206) 800-7277 | sales@barsala.com.</b></h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </apex:outputPanel>
+
+            <apex:outputPanel rendered="{!userModel.isBookingAllowed}">
+            <div class="slds slds-scope" style="{!if(UserisOnSalesforce1,'padding:10px;','')}">
+                <!-- page header -->
+                <div class="slds-page-header">
+                    <div class="slds-grid">
+                        <div class="slds-col slds-has-flexi-truncate">
+                            <div class="slds-media slds-no-space slds-grow">
+                                <div class="slds-media__figure">
+                                    <svg class="slds-icon slds-icon-custom-custom32" aria-hidden="true">
+                                        <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Resource.lightning, "/assets/icons/custom-sprite/svg/symbols.svg#custom32")}"></use>
+                                    </svg>
+                                </div>
+                                <div class="slds-media__body">
+                                    <p class="slds-text-title--caps slds-line-height--reset">Unit</p>
+                                    <h1 class="slds-page-header__title slds-m-right--small slds-align-middle slds-truncate" title="Unit Booking Wizard">Unit Booking Wizard</h1>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--Processbar for Unit Booking--> 
+                <!--Hide progressbar when we are SF1-->
+                <apex:outputPanel rendered="{!!UserisOnSalesforce1}">
+                    <div class="slds-grid" style="margin-top:10px;">
+                        <div class="slds-tabs--path" role="application">
+                            <ul class="slds-tabs--path__nav" role="tablist">
+                                <li class="slds-tabs--path__item slds-is-current" role="presentation">
+                                    <a class="slds-tabs--path__link" id="search" aria-controls="content-path-1" aria-selected="false" 
+                                            tabindex="-1" role="tab" href="javascript:void(0);" aria-live="assertive">
+                                        <span class="slds-tabs--path__stage">
+                                            <svg class="slds-icon slds-icon--x-small" aria-hidden="true">
+                                                <use xlink:href="{!URLFOR($Resource.lightning, "/assets/icons/utility-sprite/svg/symbols.svg#check")}"></use>
+                                            </svg>
+                                            <span class="slds-assistive-text">Stage Complete</span>
+                                        </span>
+                                        <span class="slds-tabs--path__title">Search Unit</span>
+                                    </a>
+                                </li>
+                                <li class="slds-tabs--path__item slds-is-incomplete" role="presentation">
+                                    <a class="slds-tabs--path__link" id="booking" aria-controls="content-path-1" aria-selected="false" tabindex="-1" role="tab" href="javascript:void(0);" aria-live="assertive">
+                                        <span class="slds-tabs--path__stage">
+                                            <svg class="slds-icon slds-icon--x-small" aria-hidden="true">
+                                                <use xlink:href="{!URLFOR($Resource.lightning, "/assets/icons/utility-sprite/svg/symbols.svg#check")}"></use>
+                                            </svg>
+                                            <span class="slds-assistive-text">Stage Complete</span>
+                                        </span>
+                                        <span class="slds-tabs--path__title">Booking Information</span>
+                                    </a>
+                                </li>
+                                <li class="slds-tabs--path__item slds-is-incomplete" role="presentation">
+                                    <a class="slds-tabs--path__link" id="payment" aria-controls="content-path-1" aria-selected="false" tabindex="-1" role="tab" href="javascript:void(0);" aria-live="assertive">
+                                        <span class="slds-tabs--path__stage">
+                                            <svg class="slds-icon slds-icon--x-small" aria-hidden="true">
+                                                <use xlink:href="{!URLFOR($Resource.lightning, "/assets/icons/utility-sprite/svg/symbols.svg#check")}"></use>
+                                            </svg>
+                                        </span>
+                                        <span class="slds-tabs--path__title">Payment Information</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </apex:outputPanel>
+                <!--Panel for Processbar-->
+                <div id="mainContent" style="margin-top:10px;">
+                    <div id="searchContent">
+                        <div class="{!if(UserisOnSalesforce1, 'slds-form slds-form_stacked','slds-form--compound')}">
+                            <div class="slds-form-element__group">
+                                <div class="slds-form-element__row">
+                                    <div class="slds-form-element" style="display: none;">
+                                        <label class="slds-form-element__label">City</label>
+                                        <div class="slds-form-element__control">
+                                            <select id="selCity" class="slds-select">
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="slds-form-element">
+                                        <label class="slds-form-element__label" >From Date</label>
+                                        <div class="slds-form-element__control">
+                                            <div class="slds-input-has-icon slds-input-has-icon--right">
+                                                <svg aria-hidden="true" class="slds-input__icon slds-icon-text-default">
+                                                    <use xlink:href="{!URLFOR($Resource.lightning, '/assets/icons/utility-sprite/svg/symbols.svg#event')}"></use>
+                                                </svg> 
+                                                <input type="text" id="dtFromDate" class="slds-input" placeholder="Pick a From Date" label="From Date"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="slds-form-element">
+                                        <label class="slds-form-element__label" >To Date</label>
+                                        <div class="slds-form-element__control">
+                                            <div class="slds-input-has-icon slds-input-has-icon--right">
+                                                <svg aria-hidden="true" class="slds-input__icon slds-icon-text-default">
+                                                    <use xlink:href="{!URLFOR($Resource.lightning, '/assets/icons/utility-sprite/svg/symbols.svg#event')}"></use>
+                                                </svg> 
+                                                <input type="text" id="dtToDate" class="slds-input" placeholder="Pick a To Date" label="To Date"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="slds-form-element">
+                                        <label class="slds-form-element__label" >No. of Guests</label>
+                                        <div class="slds-form-element__control">
+                                            <select id="txtNoofguests" class="slds-select">
+                                                <option value="1">1</option>
+                                                <option value="2">2</option>
+                                                <option value="3">3</option>
+                                                <option value="4">4</option>
+                                                <option value="5">5</option>
+                                                <option value="6">6</option>
+                                                <option value="7">7</option>
+                                                <option value="8">8</option>
+                                                <option value="9">9</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="slds-form-element">
+                                        <label class="slds-form-element__label" ></label>
+                                        <div class="slds-form-element__control">
+                                            <button class="slds-button slds-button--brand btnSearchUnit">Search Unit</button>
+                                            <button class="slds-button slds-button--brand btnClear">Clear</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="divavilableunits" style="display:none;margin-top: 10px;overflow-x: auto;">
+                            <!--Render this table only when we are on PC-->
+                            <apex:outputPanel rendered="{!!UserisOnSalesforce1}">
+                                <table width="100%" class="tblavailableunits slds-table slds-table--bordered slds-table--cell-buffer slds-table--col-bordered" style="border-spacing:0px !important;">
+                                    <thead>
+                                        <tr>
+                                            <th width="10%"><b>Building</b></th>
+                                            <th width="20%"><b>Unit</b></th>
+                                            <th width="5%"><b>UnitType</b></th>
+                                            <th width="10%"><b>Neighborhood</b></th>
+                                            <th width="10%"><b>Average Price</b></th>
+                                            <th width="5%"><b>Extra Guest Price</b></th>
+                                            <th width="10%"><b>Cleaning Fee</b></th>
+                                            <th width="10%"><b>Total Tax</b></th>
+                                            <th width="10%"><b>Total Price</b></th>
+                                            <th width="10%"><b>Action</b></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                                <!-- <center>
+                                    <div class="slds-form-element" style="margin-top:10px;">
+                                        <button class="slds-button slds-button--brand btnNextToBooking">Proceed to Booking</button>
+                                    </div>
+                                </center> -->
+                            </apex:outputPanel>
+                            <!--Render this when we are on SF1-->
+                            <apex:outputPanel rendered="{!UserisOnSalesforce1}">
+                                <ul class="slds-accordion clearfix" id="ulavailableunits">
+                                  
+                                </ul>
+                            </apex:outputPanel>
+                        </div>
+                    </div>
+                    <div id="bookingContent" style="display:none;">
+                        <div class="slds-grid slds-wrap slds-m-top--large" >
+                        <!-- MAIN CARD -->
+                        <div class="slds-col slds-size--1-of-1 slds-large-size--1-of-5"></div>
+                        <div class="slds-col slds-col-rule--right slds-size--1-of-1 slds-large-size--2-of-5 {!if(UserisOnSalesforce1,'','slds-p-right--large')}">
+                            <article class="slds-card">
+                                <div class="slds-card__header slds-grid">
+                                    <header class="slds-media slds-media--center slds-has-flexi-truncate">
+                                        <div class="slds-media__figure">
+                                            <span class="slds-icon_container slds-icon-standard-contact" title="description of icon when needed">
+                                                <svg class="slds-icon slds-icon--small" aria-hidden="true">
+                                                    <use xlink:href="{!URLFOR($Resource.lightning, '/assets/icons/standard-sprite/svg/symbols.svg#account')}"></use>
+                                                </svg>
+                                            </span>
+                                        </div>
+                                        <div class="slds-media__body">
+                                            <h2>
+                                                <a href="javascript:void(0);" class="slds-card__header-link">
+                                                    <span class="slds-text-heading--small" id="btunit">Card Header</span>
+                                                </a>
+                                            </h2>
+                                        </div>
+                                    </header>
+                                </div>
+                                <div class="slds-card__body slds-p-left--xx-large">
+                                    <div class="slds-form-element " style="display: inline-flex;">
+                                        <label class="slds-form-element__label">Unit Type:</label>
+                                        <p id="btunittype" style="padding-left: 29px;"></p>
+                                    </div>
+                                    <br/>
+                                    <div class="slds-form-element" style="display: inline-flex;">
+                                        <label class="slds-form-element__label">Neighborhood:</label>
+                                        <p id="btneighbor" ></p>
+                                    </div>
+                                </div>
+                            </article>
+
+                            
+                            <div id="guestMessagePanel" style="display:none;height: 4rem;">
+                                <div class="slds-notify_container slds-is-relative">
+                                    <div id="guestMessageBrand" class="slds-notify slds-notify_toast slds-size--1-of-1 slds-medium-size--4-of-5" role="alert">
+                                        <span class="slds-assistive-text">success</span>
+                                        <span class="slds-icon_container slds-icon-utility-success slds-m-right_small slds-no-flex slds-align-top" title="Description of icon when needed">
+                                            <svg class="slds-icon slds-icon_small" aria-hidden="true">
+                                                <use id="guestMessageIcon" xlink:href="{!URLFOR($Resource.lightning, 'assets/icons/utility-sprite/svg/symbols.svg#success')}" />
+                                            </svg>
+                                        </span>
+                                        <div class="slds-notify__content">
+                                            <h2 class="slds-text-heading_small">Matching Guest found</h2>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            
+                            <div class="slds-card slds-m-top--small" id="guestPanel">
+                                <header class="slds-card__header slds-grid">
+                                    <div class="slds-col slds-media slds-media--center">
+                                        <div class="slds-media__figure">
+                                            <svg aria-hidden="true" class="slds-icon slds-icon-standard-contact slds-icon--small">
+                                                <use xlink:href="{!URLFOR($Resource.lightning, 'assets/icons/standard-sprite/svg/symbols.svg#contact')}"></use>
+                                            </svg>
+                                        </div>
+                                        <div class="slds-media__body">
+                                            <h3 class="slds-text-heading--small">{!IF(userModel.isStandardUser,'Guest','Billing')} Details</h3>
+                                        </div>
+                                    </div>
+                                </header>
+                                <!-- CARD BODY = TABLE -->
+                                <section class="slds-card__body">
+                                    <div class="slds-form--compound">
+                                        <div class="slds-form-element__group">
+                                            <div class="slds-form-element__row">
+                                                <div class="slds-form-element slds-size--1-of-2 slds-p-left--medium">
+                                                    <label class="slds-form-element__label">First Name</label>
+                                                    <div class="slds-form-element__control txtFirstName">
+                                                        <input type="text" id="txtFirstName" class="slds-input" />
+                                                    </div>
+                                                </div>
+                                                <div class="slds-form-element slds-size--1-of-2 slds-p-right--medium">
+                                                    <label class="slds-form-element__label">Last Name</label>
+                                                    <div class="slds-form-element__control txtLastName">
+                                                        <input type="text" id="txtLastName" class="slds-input" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="slds-form-element__row">
+                                                <div class="slds-form-element slds-size--1-of-2 slds-p-left--medium">
+                                                    <label class="slds-form-element__label">Email</label>
+                                                    <div class="slds-form-element__control txtEmail">
+                                                        <input type="text" id="txtEmail" class="slds-input" />
+                                                    </div>
+                                                </div>
+                                                <div class="slds-form-element slds-size--1-of-2 slds-p-right--medium">
+                                                    <label class="slds-form-element__label">Phone Number</label>
+                                                    <div class="slds-form-element__control txtPhoneNumber">
+                                                        <input type="text" id="txtPhoneNumber" class="slds-input" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <!-- <apex:outputPanel rendered="{!userModel.isStandardUser}">
+                                                <div class="slds-form-element__row">
+                                                    <div class="slds-form-element slds-size--1-of-2 slds-p-left--medium">
+                                                        <label class="slds-form-element__label">Sales channel</label>
+                                                        <div class="slds-form-element__control">
+                                                            <select id="selSalesChannel" class="slds-select">
+                                                                <option value="manual">Manual</option>
+                                                                <option value="expedia">Expedia</option>
+                                                                <option value="airbnb">Airbnb</option>
+                                                                <option value="homeaway">Homeaway</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                    <div class="blankDiv slds-form-element slds-size--1-of-2 slds-p-right--medium"></div>
+                                                    <div style="display:none;" class="externalCodeDiv slds-form-element slds-size--1-of-2 slds-p-right--medium">
+                                                        <label class="slds-form-element__label">External Code</label>
+                                                        <div class="slds-form-element__control">
+                                                            <input type="text" id="externalCode" class="slds-input" maxlength="12" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </apex:outputPanel> -->
+                                        </div>
+                                    </div>
+                                </section>
+                                <!-- / CARD BODY = SECTION + TABLE -->
+                                <footer class="slds-card__footer">
+                                </footer>
+                            </div>
+                            
+                            <apex:outputPanel styleClass="slds-clearfix" rendered="{!!UserisOnSalesforce1}">
+                                <div class="slds-float--right slds-m-top_x-small">
+                                    <button class="slds-button slds-button_neutral btnResetGuest">Reset</button>
+                                    <button class="slds-button slds-button_neutral btnBackToSearchUnit">
+                                        <span class="slds-text-not-selected">
+                                            <svg class="slds-button__icon_stateful slds-button__icon_left" aria-hidden="true">
+                                                <use xlink:href="{!URLFOR($Resource.lightning, 'assets/icons/utility-sprite/svg/symbols.svg#back')}" />
+                                            </svg>
+                                            Back to Search
+                                        </span>
+                                    </button>
+                                    <button class="slds-button slds-button--brand btnNextToPayment">Proceed to Payment</button>
+                                </div>                           
+                            </apex:outputPanel>
+                        </div>
+                        <!-- compact card -->
+                        <div class="slds-col slds-size--1-of-1 slds-large-size--1-of-5 {!if(UserisOnSalesforce1,'','slds-p-left--large')}" style="{!if(UserisOnSalesforce1,'margin-top:10px;margin-bottom:10px;','')}">
+                            <fieldset class="slds-form--compound slds-box slds-box--x-small" style="font-size: 14px;">
+                                <div class="slds-form-element__group">
+                                    <div class="slds-form-element__row">
+                                        <div class="slds-form-element slds-size--1-of-2 ">
+                                            <label class="slds-form-element__label" for="input-01">Check In</label>
+                                            <div class="slds-form-element__control slds-box slds-box--xx-small">
+                                                <span id="txtBookingStartDate" class="slds-form-element__static "></span>
+                                            </div>
+                                        </div>
+                                        <div class="slds-form-element slds-size--1-of-2 ">
+                                            <label class="slds-form-element__label" for="input-02">Check Out</label>
+                                            <div class="slds-form-element__control slds-box slds-box--xx-small">
+                                                <span id="txtBookingEndDate" class="slds-form-element__static "></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="slds-form-element__row">
+                                        <div class="slds-form-element slds-size--1-of-1 ">
+                                            <label class="slds-form-element__label" for="input-03">Guests</label>
+                                            <div class="slds-form-element__control slds-box slds-box--xx-small">
+                                                <span id="btguest" class="slds-form-element__static slds-p-left--small"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style="padding-right: 6px;">
+                                        <dl class="slds-list--horizontal slds-wrap slds-m-top--small">
+                                            <dt class="slds-item--label slds-text-color--weak slds-truncate" style="font-weight: normal;width: 50%;" >Unit Total</dt>
+                                            <dd class="slds-item--detail slds-truncate slds-text-align--right" style="width: 50%" id="btsubtotal"></dd>
+                                        </dl>
+
+                                        <apex:outputPanel rendered="{!userModel.isStandardUser}">
+                                            <dl class="slds-list--horizontal slds-wrap slds-p-top--small ">    
+                                                <dt class="slds-item--label slds-text-color--weak slds-truncate" style="font-weight: normal;width: 65%;">Discount %</dt>
+                                                <dd class="slds-item--detail slds-truncate slds-text-align--right" style="width: 35%">
+                                                    <div class="slds-form--compound slds-form-element__row>">
+                                                        <div class="slds-form-element__control " >
+                                                            <input type="text" id="discount" class="slds-input" maxlength="6" style="text-align: right;padding-right: 5px;" />
+                                                        </div>
+                                                    </div>
+                                                </dd>
+                                            </dl>
+                                            <br/>
+                                            <dl class="slds-list--horizontal slds-wrap">    
+                                                <dt class="slds-item--label slds-text-color--weak slds-truncate" style="font-weight: normal;width: 50%;" >SubTotal</dt>
+                                                <dd class="slds-item--detail slds-truncate slds-text-align--right" style="width: 50%" id="btTotalPriceRef"></dd>
+                                            </dl>
+                                        </apex:outputPanel>
+
+                                        <hr style="margin: 3px;" />
+                                        
+                                        <dl class="slds-list--horizontal slds-wrap">
+                                            <dt class="slds-item--label slds-text-color--weak slds-truncate" style="font-weight: normal;width: 65%;">Cleaning fee</dt>
+                                            <dd class="slds-item--detail slds-truncate slds-text-align--right" style="width: 35%" id="btcleaningfee"></dd>
+                                        </dl>
+                                        <hr style="margin: 3px;" />
+                                        <dl class="slds-list--horizontal slds-wrap">    
+                                            <dt class="slds-item--label slds-text-color--weak slds-truncate" style="font-weight: normal;width: 60%;" >Total Tax</dt>
+                                            <dd class="slds-item--detail slds-truncate slds-text-align--right" style="width: 40%" id="bttax"></dd>
+                                        </dl>
+                                    </div>
+                                    
+                                    <!--<hr style="margin: 8px;" />-->
+                                    <br/><dl class="slds-list--horizontal slds-wrap" style="font-weight: bold;"> 
+                                        <dt class="slds-item--label slds-text-color--weak slds-truncate " style="width: 50%;">Final Price</dt>
+                                        <apex:outputPanel rendered="{!userModel.isStandardUser}" layout="none">
+                                            <dd class="slds-item--detail slds-truncate slds-text-align--right" style="width: 50%">
+                                                <div class="slds-form--compound slds-form-element__row>">
+                                                    <div class="slds-form-element__control " >
+                                                        <input type="text" id="bttotalprice" disabled="disabled" class="slds-input" style="text-align: right;padding-right: 5px;" />
+                                                    </div>
+                                                </div>
+                                            </dd>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{!!userModel.isStandardUser}" layout="none">
+                                            <dd class="slds-item--detail slds-truncate slds-text-align--right" id="bttotalpriceText" style="width: 50%" />
+                                        </apex:outputPanel>
+                                    </dl>
+                                </div>
+                            </fieldset>
+                        </div>
+                        <div class="slds-col slds-size--1-of-1 slds-large-size--1-of-5">
+                            <apex:outputPanel styleClass="slds-clearfix" rendered="{!UserisOnSalesforce1}">
+                                <div class="slds-m-top_x-small">
+                                    <button class="slds-button slds-button_neutral btnResetGuest">Reset</button>
+                                    <button class="slds-button slds-button_neutral btnBackToSearchUnit">
+                                        <span class="slds-text-not-selected">
+                                            <svg class="slds-button__icon_stateful slds-button__icon_left" aria-hidden="true">
+                                                <use xlink:href="{!URLFOR($Resource.lightning, 'assets/icons/utility-sprite/svg/symbols.svg#back')}" />
+                                            </svg>
+                                            Back to Search
+                                        </span>
+                                    </button>
+                                    <button class="slds-button slds-button--brand btnNextToPayment">
+                                        Proceed to Payment
+                                    </button>
+                                </div>                           
+                            </apex:outputPanel>
+                        </div>
+                    <!-- compact card end -->
+
+                    </div >
+                        
+                    </div>
+                    <div id="paymentContent" style="display:none;margin-bottom:25px;">
+                        <div class="slds-grid slds-wrap">
+                            <div class="slds-col slds-size--1-of-1 slds-large-size--1-of-3"></div>
+                            <div class="slds-form--compound slds-col slds-size--1-of-1 slds-large-size--1-of-3">
+                                <div class="priceCard">
+                                    <article class="slds-card slds-card--narrow">
+                                        <div class="slds-card__header slds-grid">
+                                            <header class="slds-media slds-media--center slds-has-flexi-truncate">
+                                                <div class="slds-media__figure">
+                                                    <span class="slds-icon_container slds-icon-standard-account" title="Booked Unit">
+                                                        <svg class="slds-icon slds-icon--small" aria-hidden="true">
+                                                            <use xlink:href="{!URLFOR($Resource.lightning, "/assets/icons/standard-sprite/svg/symbols.svg#account")}"></use>
+                                                        </svg>
+                                                    </span>
+                                                </div>
+                                                <div class="slds-media__body">
+                                                    <h2 id="pcunit">
+                                                        <a href="javascript:void(0);" class="slds-card__header-link slds-truncate">
+                                                            <span class="slds-text-heading--small"></span>
+                                                        </a>
+                                                    </h2>
+                                                </div>
+                                            </header>
+                                        </div>
+                                        <div class="slds-card__body slds-p-left--x-large">
+                                            <!-- <p id="pcsubtotal">SubTotal</p>
+                                            <p id="pccleaningfee">Cleaning fee</p>
+                                            <p id="pctax"></p>
+                                            <p id="pcdis"></p>
+                                            <p id="pctotalprice"></p> -->
+
+                                            <div class="slds-tile__detail slds-media__body slds-p-left--x-large slds-p-right--large">
+                                                <dl class="slds-list--horizontal slds-wrap">
+                                                    <dt class="slds-item--label slds-text-color--weak " style="font-weight: normal;" >Unit Total:</dt>
+                                                    <dd class="slds-item--detail  slds-text-align--right" id="pcsubtotal"></dd>
+                                                    <apex:outputPanel rendered="{!userModel.isStandardUser}" layout="none">
+                                                        <dt class="slds-item--label slds-text-color--weak " style="font-weight: normal;">Discount %:</dt>
+                                                        <dd class="slds-item--detail  slds-text-align--right" id="pcdis"></dd>
+                                                        <dt class="slds-item--label slds-text-color--weak  " style="font-weight: normal;">SubTotal:</dt>
+                                                        <dd class="slds-item--detail  slds-text-align--right " id="pcTotalPriceRef"></dd>
+                                                    </apex:outputPanel>
+                                                    <dt class="slds-item--label slds-text-color--weak " style="font-weight: normal;">Cleaning fee:</dt>
+                                                    <dd class="slds-item--detail  slds-text-align--right" id="pccleaningfee"></dd>
+                                                    <dt class="slds-item--label slds-text-color--weak " style="font-weight: normal;" >Total Tax:</dt>
+                                                    <dd class="slds-item--detail  slds-text-align--right" id="pctax"></dd>
+                                                    
+                                                    <dt class="slds-item--label slds-text-color--weak  " style="font-weight: normal;">Final Price:</dt>
+                                                    <dd class="slds-item--detail  slds-text-align--right " id="pctotalprice"></dd>
+                                                </dl>
+                                            </div>
+                                        </div>
+                                        <div class="slds-card__footer"></div>
+                                    </article>
+                                </div>
+                                
+                                <div class="slds-form-element__group slds-box slds-box--x-small slds-m-top--small">
+                                    <apex:outputPanel rendered="{!userModel.isStandardUser}" layout="none">
+                                        <div class="slds-form-element__group slds-box--x-small">
+                                            <div class="slds-form-element__row">
+                                                <div class="slds-form-element slds-size--1-of-1">
+                                                    <span class="slds-checkbox" >
+                                                        <input type="checkbox" id="disableCleaning" value="" />
+                                                        <label for="disableCleaning" class="slds-checkbox__label" >
+                                                            <span class="slds-checkbox_faux"></span>
+                                                            <span class="slds-form-element__label" >
+                                                                Disable auto-cleaning upon checkout e.g. for maintenance
+                                                            </span>
+                                                        </label>
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <div class="slds-form-element__row">
+                                                <div class="slds-form-element slds-size--1-of-1">
+                                                    <label class="slds-form-element__label">
+                                                        Private Comment
+                                                    </label>
+                                                    <div class="slds-form-element__control">
+                                                        <textarea id="privateComment" class="slds-textarea"></textarea>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </apex:outputPanel>
+
+                                    <div id="ccPanel">
+                                        <div class="slds-form-element__group slds-box--x-small" id="cardsPanel">
+
+                                        </div>
+
+                                        <div class="slds-form-element__group slds-box--x-small">
+                                            <div class="slds-form-element">
+                                                <div class="slds-form-element__control" >
+                                                    <span class="slds-checkbox" >
+                                                        <input type="checkbox" id="updateCardDetails" value="" onchange="showHideCardPanel();" />
+                                                        <label for="updateCardDetails" class="slds-checkbox__label" >
+                                                            <span class="slds-checkbox_faux"></span>
+                                                            <span class="slds-form-element__label" >
+                                                                Add/Update Credit Card
+                                                            </span>
+                                                        </label>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div id="ccDetailPanel">
+                                                <div class="slds-form-element__row">
+                                                    <div class="slds-form-element slds-size--1-of-1 ">
+                                                        <label class="slds-form-element__label">
+                                                            <abbr title="required" class="slds-required">*</abbr>
+                                                            Card Number
+                                                        </label>
+                                                        <div class="slds-form-element__control">
+                                                            <input type="text" id="txtCardNumber" maxlength="16" minlength="12" pattern="[0-9]*" required="true" class="slds-input" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="slds-form-element__row">
+                                                    <div class="slds-form-element slds-size--1-of-2">
+                                                        <label class="slds-form-element__label">
+                                                            <abbr title="required" class="slds-required">*</abbr>
+                                                            Exp. Month
+                                                        </label>
+                                                        <div class="slds-form-element__control">
+                                                            <select id="txtExpMonth" class="slds-select">
+                                                                <option value="">Select</option>
+                                                                <option value="01">01-January</option>
+                                                                <option value="02">02-February</option>
+                                                                <option value="03">03-March</option>
+                                                                <option value="04">04-April</option>
+                                                                <option value="05">05-May</option>
+                                                                <option value="06">06-June</option>
+                                                                <option value="07">07-July</option>
+                                                                <option value="08">08-August</option>
+                                                                <option value="09">09-September</option>
+                                                                <option value="10">10-October</option>
+                                                                <option value="11">11-November</option>
+                                                                <option value="12">12-December</option>
+                                                            </select>
+                                                            <!--<input type="text" id="txtExpMonth" class="slds-input" />-->
+                                                        </div>
+                                                    </div>
+                                                    <div class="slds-form-element slds-size--1-of-2">
+                                                        <label class="slds-form-element__label">
+                                                            <abbr title="required" class="slds-required">*</abbr>
+                                                            Exp. Year
+                                                        </label>
+                                                        <div class="slds-form-element__control">
+                                                            <select id="txtExpYear" class="slds-select">
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="slds-form-element__row">
+                                                    <div class="slds-form-element slds-size--1-of-1 ">
+                                                        <label class="slds-form-element__label">
+                                                            <abbr title="required" class="slds-required">*</abbr>
+                                                            Name on Card
+                                                        </label>
+                                                        <div class="slds-form-element__control">
+                                                            <input type="text" id="txtNameonCard" class="slds-input" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="slds-form-element__row">
+                                                    <!--<div class="slds-form-element slds-size--1-of-2">
+                                                        <label class="slds-form-element__label">
+                                                            <abbr title="required" class="slds-required">*</abbr>
+                                                            Card Type
+                                                        </label>
+                                                        <div class="slds-form-element__control">
+                                                            <input type="text" id="txtCardType" class="slds-input" />
+                                                        </div>
+                                                    </div>-->
+                                                    <div class="slds-form-element slds-size--1-of-2">
+                                                        <label class="slds-form-element__label">
+                                                            <abbr title="required" class="slds-required">*</abbr>
+                                                            CVV
+                                                        </label>
+                                                        <div class="slds-form-element__control">
+                                                            <input type="text" id="txtCVV" class="slds-input" maxlength="4" minlength="3" pattern="[0-9]*" />
+                                                        </div>
+                                                    </div>
+                                                    <div class="slds-form-element slds-size--1-of-2">
+                                                        <label class="slds-form-element__label">
+                                                            <abbr title="required" class="slds-required">*</abbr>
+                                                            Zip Code
+                                                        </label>
+                                                        <div class="slds-form-element__control">
+                                                            <input type="text" id="txtZipCode" class="slds-input" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <center>
+                                    <div class="slds-form-element " style="margin-top:10px;margin-bottom:50px;">
+                                        <button class="slds-button slds-button--brand btnBackToBooking">Back to Booking</button>
+                                        <button class="slds-button slds-button--brand btnBookUnit">Book Unit</button>
+                                    </div>
+                                </center>
+                            </div>
+                            <div class="slds-col slds-size--1-of-1 slds-large-size--1-of-3"></div>
+                        </div>
+                        <!-- <center>
+                            <div class="slds-form-element slds-size--1-of-3 slds-small-size--1-of-3 slds-medium-size--1-of-3" style="margin-top:10px;">
+                                <button class="slds-button slds-button--brand btnBackToBooking">Back to Booking</button>
+                                <button class="slds-button slds-button--brand btnBookUnit">Book Unit</button>
+                            </div>
+                        </center> -->
+                    </div>
+                </div>
+            </div>
+            </apex:outputPanel>
+
+            <!-- added by Tarun-Kandsa - May 22, 2019 -->
+            <script src="{!URLFOR($Resource.jquery3)}"></script>
+            <script src="{!URLFOR($Resource.fancybox,'/fancybox/jquery.fancybox.min.js')}"></script>
+
+            <!-- removed by tarun as fancybox requires jquery3
+            <apex:includeScript value="{!URLFOR($Resource.SLCA2__jQuery, '/jquery.min.js')}"/>
+            -->
+            <!-- added by Tarun-Kandsa, - May 22, 2019  moved here from top -->
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.12.0/moment.js"></script>
+            <script src="{!URLFOR($Resource.aljs, '/jquery.aljs-init.min.js')}"></script>
+            <script src="{!URLFOR($Resource.aljs, '/jquery.aljs-datepicker.min.js')}"></script>
+        </body>
+    </html>
+    <script>
+        //Assigning SLDS Static Resource Path To A Variable To Use It With ALJS Initialization
+        var assetsLoc = '{!URLFOR($Resource.lightning)}';
+        var objBooking = new Object();
+        //var totPrice;
+        var bookingId;
+        var savedCards;
+        var selectedCardId='';
+        var defaultSourceId='';
+        var unitName = ''
+        var unitTax;
+        var unitPrice;
+        var unitCleanfee;
+
+        <!--Model message box-->
+        function getMessagebox(){
+            return '<div id="divMessagebox">\
+              <div aria-hidden="false" role="dialog" class="slds-modal slds-fade-in-open"> \
+                <div class="slds-modal__container"> \
+                  <div class="slds-modal__header"> \
+                    <h2 class="slds-text-heading--medium">{title}</h2> \
+                    <button class="slds-button slds-button--icon-inverse slds-modal__close btnCloseMessagebox"> \
+                       <svg class="slds-button__icon slds-button__icon--large" aria-hidden="true"> \
+                         <use xlink:href="{!URLFOR($Resource.lightning, '/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use> \
+                       </svg> \
+                      <span class="slds-assistive-text">Close</span> \
+                    </button> \
+                  </div> \
+                  <div class="slds-modal__content slds-p-around--medium"> \
+                    <div> \
+                      <p>{message}</p> \
+                    </div> \
+                  </div> \
+                  <div class="slds-modal__footer"> \
+                    <div class="slds-x-small-buttons--horizontal"> \
+                      {cancelbutton} \
+                      {actionbutton} \
+                    </div> \
+                  </div> \
+                </div> \
+              </div> \
+              <div class="slds-backdrop slds-backdrop--open"></div> \
+            </div>';
+        }
+        
+        <!--Close Message box--->
+        $(document).on('click','.btnCloseMessagebox',function(){
+            $('.slds').find('#divMessagebox').remove();
+            return false;
+        });
+        
+        $(document).on('click','.btnCloseBookingMessagebox',function(){
+            // $('.slds').find('#divMessagebox').remove();
+            // $('a#search').closest('li').removeClass('slds-is-complete').addClass('slds-is-current');
+            // $('a#booking').closest('li').removeClass('slds-is-complete').addClass('slds-is-incomplete');
+            // $('a#payment').closest('li').removeClass('slds-is-current').addClass('slds-is-incomplete');
+            // $('div#searchContent').show();
+            // $('div#bookingContent').hide();
+            // $('div#paymentContent').hide();
+            window.top.location.href = '/'+bookingId;
+            // return false;
+        });
+        
+        //ALJS Initialization   
+        $.aljsInit({
+            assetsLocation: assetsLoc
+        });
+        
+        $(document).ready(function() {
+            init();
+        });
+
+        function fnheightcalculation(){
+            var tblhight = $('table.tblavailableunits tbody').height();
+            var bodyheight = $('html body').height();
+            if(bodyheight > tblhight){
+
+            }
+        };
+        
+        function init(){
+            if({!userModel.isStandardUser} || {!userModel.isBookingAllowed}){
+                objBooking = new Object();
+                //Initializing Datepicker with options To The SLDS Input on document ready.
+                $('#dtFromDate,#dtToDate,#txtBookingStartDate,#txtBookingEndDate').datepicker({
+                    format: 'MM/DD/YYYY',
+                    numYearsBefore: 2,
+                    onChange: function() {
+                        $('#divavilableunits').hide();
+                    }
+                });
+
+                fnBindCities();
+                fnBindYear();
+                bindFiltersOnChange();
+                //prefilGuestDetailsForCommunityUser();
+            }
+        }
+
+        function prefilGuestDetailsForCommunityUser(){
+            
+            if({!userModel.isBookingAllowed}){
+                $('#cardsPanel').html('');
+                
+                var conModel = JSON.parse('{!userModel.conModel}');
+                
+                if(conModel != undefined && conModel != null){
+                    var con = conModel.contact;
+                    savedCards = conModel.ccModelList;
+                    
+                    if(con.FirstName && con.FirstName.trim().length>0){
+                        var fn = $('#txtFirstName');
+                        $(fn).val(con.FirstName);
+                        //$(fn).parent().append(con.FirstName);
+                        //$(fn).remove();
+                    }
+                    
+                    // $('#txtLastName').val(con.LastName);
+                    var ln = $('#txtLastName');
+                    $(ln).val(con.LastName);
+                    // $(ln).parent().append(con.LastName);
+                    // $(ln).remove();
+
+                    if(con.Email && con.Email.trim().length>0){
+                        // $('#txtEmail').val(con.Email);
+                        var em = $('#txtEmail');
+                        $(em).val(con.Email);
+                        // $(em).parent().append(con.Email);
+                        // $(em).remove();
+                    }
+
+                    if(con.Phone && con.Phone.trim().length>0){
+                        // $('#txtPhoneNumber').val(con.Phone); 
+                        var ph = $('#txtPhoneNumber');
+                        $(ph).val(con.Phone);
+                        // $(ph).parent().append(con.Phone);
+                        // $(ph).remove();
+                    }
+                    objBooking.Firstname__c = con.FirstName;
+                    objBooking.Lastname__c = con.LastName;
+                    objBooking.Email__c = con.Email;
+                    objBooking.Phone_number__c = con.Phone;
+                    objBooking.Billing_Contact__c = con.Id;
+                }else{ 
+                    objBooking.Billing_Contact__c = null;  
+                    savedCards = null;
+                } 
+            }
+        }
+
+        function fnBindCities(){
+            $('select[id$=selCity]').empty();
+            $('select[id$=selCity]').append('<option value="">Select</option>');
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.UnitBookingByOwnerController.allCities}',
+                function (result, event) {
+                    if (event.status) {
+                        if(result != undefined){
+                            var option = '<option value="{name}">{name}</option>';
+                            $.map(result,function(str,i){
+                                var newoption = option;
+                                newoption = newoption.replace('{name}',str.Name).replace('{name}',str.Name);
+                                $('select[id$=selCity]').append(newoption);
+                            });
+                        }
+                    } else if (event.type === 'exception') {
+                        alert(event.message + ' ' + event.where);
+                    } else {
+                        alert(event.message);
+                    }
+                },
+                { buffer: true, escape: true, timeout: 120000 }
+            );
+        }
+        
+        function fnBindYear(){
+            $('select[id$=txtExpYear]').empty();
+            $('select[id$=txtExpYear]').append('<option value="">Select</option>');
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.UnitBookingByOwnerController.allYear}',
+                function (result, event) {
+                    if (event.status) {
+                        if(result != undefined){
+                            var option = '<option value="{name}">{name}</option>';
+                            $.map(result,function(str,i){
+                                var newoption = option;
+                                newoption = newoption.replace('{name}',str).replace('{name}',str);
+                                $('select[id$=txtExpYear]').append(newoption);
+                            });
+                        }
+                    } else if (event.type === 'exception') {
+                        alert(event.message + ' ' + event.where);
+                    } else {
+                        alert(event.message);
+                    }
+                },
+                { buffer: true, escape: true, timeout: 120000 }
+            );
+        }
+        
+        $(document).on('click','.btnBackToBooking',function(){
+            $('div#bookingContent').show();
+            $('div#paymentContent').hide();
+        });
+        $(document).on('click','.btnBackToSearchUnit',function(){
+            $('div#searchContent').show();
+            $('div#bookingContent').hide();
+            if({!userModel.isStandardUser})
+                $('#discount').val('');
+        });
+        
+        if({!userModel.isStandardUser} && {!userModel.isBookingAllowed}){
+            $(document).on('change','#bttotalprice',function(){
+                calculateAmountsWhenFinalPriceChanges();
+            });
+            
+            $(document).on('change','#discount',function(evt){
+                // console.log(evt.keyCode);
+                var discount = $(this).val();
+                calculateAmountsWhenDiscountPercentChanges();
+            });
+
+            $(document).on('keyup','#discount',function(evt){
+                // console.log(evt.keyCode);
+                var charCode = evt.keyCode;
+                //var discount = $('#discount').val();
+                if ((charCode > 95 && charCode < 106 ) || (charCode < 58 && charCode > 47) || charCode == 8 || charCode == 46 || charCode == 110 || charCode == 190 || (charCode <= 40 && charCode >= 37)){
+                    
+                    calculateAmountsWhenDiscountPercentChanges();
+                } else {
+                    return false;
+                }
+            });
+            
+            $(document).on('keyup','#bttotalprice',function(evt){
+                // console.log(evt.keyCode);
+                var charCode = evt.keyCode;
+                //var bttotalprice = $('#bttotalprice').val();
+                if ((charCode > 95 && charCode < 106 ) || (charCode < 58 && charCode > 47) || charCode == 8 || charCode == 46 || charCode == 110 || charCode == 190 || (charCode <= 40 && charCode >= 37)){
+                    
+                    calculateAmountsWhenFinalPriceChanges();
+                } else {
+                    //$('#discount').val('');
+                    //$('#bttotalprice').val(totPrice);
+                    return false;
+                }
+            });
+
+            function calculateAmountsWhenDiscountPercentChanges(){
+                var discount = $('#discount').val();
+
+                if(discount != undefined && discount != '' && discount > 0){
+
+                    if(discount > 100){                        
+                        $('#discount').val('');
+                        $('#discount').trigger('change');
+                    }else{
+                        discount = parseFloat(discount).toFixed(2);
+                        var discountedPrice = (unitPrice - ((parseFloat(unitPrice)*discount)/100)).toFixed(2);
+                        var updatedTax = ((parseFloat(discountedPrice) + parseFloat(unitCleanfee))*unitTax).toFixed(2);
+                        var updatedTotalPrice = (parseFloat(discountedPrice) + parseFloat(unitCleanfee) + parseFloat(updatedTax)).toFixed(2);
+
+                        $('#pctax').html("$" + updatedTax);
+                        $('#bttax').html("$" + updatedTax);
+                        $('#bttotalprice').val(updatedTotalPrice);
+                        $('#pctotalprice').html("$" + updatedTotalPrice);
+                        $('#pcdis').html(discount + "%");
+
+                        $('#btTotalPriceRef').html("$" + discountedPrice);
+                        $('#pcTotalPriceRef').html("$" + discountedPrice);
+                    }
+
+                    
+                } else {
+                    var updatedTax = (( parseFloat(unitPrice) + parseFloat(unitCleanfee) )*parseFloat(unitTax)).toFixed(2);
+                    var updatedTotalPrice = (parseFloat(unitPrice) + parseFloat(unitCleanfee) + parseFloat(updatedTax)).toFixed(2);
+                    $('#bttotalprice').val(updatedTotalPrice);
+                    $('#pctotalprice').html("$" + updatedTotalPrice);
+                    $('#btTotalPriceRef').html("$" + unitPrice);
+                    $('#pcTotalPriceRef').html("$" + unitPrice);
+
+                    $('#pctax').html("$" + updatedTax);
+                    $('#bttax').html("$" + updatedTax);
+                    $('#pcdis').html("0.00%");
+                }
+            }
+
+            function calculateAmountsWhenFinalPriceChanges(){
+                var bttotalprice = $('#bttotalprice').val();
+
+                if(!bttotalprice || isNaN(bttotalprice))
+                    bttotalprice = 0;
+
+                bttotalprice = parseFloat(bttotalprice).toFixed(2);
+                
+                $('#pctotalprice').html("$" + bttotalprice);
+
+                //Calculating discount amount from final price
+                var discountAmount = 
+                        (
+                            (
+                                parseFloat(unitPrice) + parseFloat(unitCleanfee) - parseFloat(bttotalprice) + 
+                                (
+                                    (( parseFloat(unitPrice) + parseFloat(unitCleanfee)) *parseFloat(unitTax))
+                                )
+                            )/(1+parseFloat(unitTax))
+                        ).toFixed(2);
+
+                var discountedPrice = (unitPrice - discountAmount).toFixed(2);
+                var discountPercentage =  ((discountAmount*100)/unitPrice).toFixed(2)
+                $('#btTotalPriceRef').html("$" + discountedPrice);
+                $('#pcTotalPriceRef').html("$" + discountedPrice);
+                $('#discount').val(discountPercentage);
+                $('#pcdis').html(discountPercentage+ "%");
+
+                //Recalculating TaxAmount
+                var updatedTax = ((parseFloat(discountedPrice) + parseFloat(unitCleanfee))*parseFloat(unitTax)).toFixed(2);
+                $('#pctax').html("$" + updatedTax);
+                $('#bttax').html("$" + updatedTax);
+            }
+        }
+
+        $(document).on('click','.btnBookUnit',function(){
+            $(this).blur();
+            var cardnumber = $('#txtCardNumber').val();
+            var nameoncard = $('#txtNameonCard').val();
+            var expmonth = $('#txtExpMonth').val();
+            var expyear = $('#txtExpYear').val();
+            var cardcvv = $('#txtCVV').val();
+            var cardtype = $('#txtCardType').val();
+            var zipcode = $('#txtZipCode').val();
+            var discount;
+            var disableCleaning;
+            var privateComment;
+            if({!userModel.isStandardUser}){
+                discount = $('#pcdis').html();
+                discount = discount.replace('%','');
+
+                disableCleaning = $("#disableCleaning").is(':checked');
+                privateComment = $("#privateComment").val();
+            }
+            var subtotal = $('#pcsubtotal').html();
+            subtotal = subtotal.replace('$','');
+            var totalprice = $('#pctotalprice').html();
+            var bookingStartDate = $('#txtBookingStartDate').html();
+            bookingStartDate = bookingStartDate.toString();
+            var bookingEndDate = $('#txtBookingEndDate').html();
+            bookingEndDate = bookingEndDate.toString();
+            totalprice = parseFloat(totalprice.replace('$',''));
+
+            if(objBooking.Sales_channel__c == 'airbnb' 
+                ||(
+                        (
+                            ((!discount || discount<100) && (totalprice && totalprice>0))
+                            || privateComment 
+                        ) 
+                    &&(
+                        (!totalprice || totalprice<=0)
+                        || (selectedCardId != undefined && selectedCardId.trim().length>0 && selectedCardId != 'newCard') 
+                        ||  (
+                            $("#updateCardDetails").is(':checked') &&
+                            isValidCardNumber(cardnumber) && !isBlank(nameoncard) && 
+                            !isBlank(expmonth)&& !isBlank(expyear) && isValidExpiration(expmonth, expyear) &&
+                            isValidCVV(cardcvv) && !isBlank(zipcode)
+                            // && !isBlank(cardtype)
+                        )
+                    )
+                )
+            ){
+                
+                $('#divProcessing').show();
+                
+                if(objBooking.Sales_channel__c == 'airbnb' || (!totalprice || totalprice<=0) || 
+                    (selectedCardId != undefined && selectedCardId.trim().length>0 && selectedCardId != 'newCard')
+                ){
+                    objBooking.Credit_Card_Number__c = null;
+                    objBooking.Credit_Card_Full_Name__c = null; 
+                    objBooking.Credit_Card_CVV__c = null;
+                    objBooking.Credit_Card_Type__c = null;
+                    objBooking.Zip_Code__c = null;
+                    objBooking.Credit_Card_Expiration_Date__c = null;
+                }else{
+                    objBooking.Credit_Card_Number__c = cardnumber;
+                    objBooking.Credit_Card_Full_Name__c = nameoncard; 
+                    objBooking.Credit_Card_CVV__c = cardcvv;
+                    objBooking.Credit_Card_Type__c = cardtype;
+                    objBooking.Zip_Code__c = zipcode;
+                    objBooking.Credit_Card_Expiration_Date__c = expmonth + '/'+expyear;
+                }
+                
+                objBooking.Disable_Cleanings__c = disableCleaning;
+                objBooking.Private_comment__c = privateComment;
+                
+                if({!userModel.isStandardUser})
+                    objBooking.Discount__c = discount;
+                // if(discount != null && discount != null && parseFloat(discount) > 0) {
+                //     objBooking.Booking_comment__c = objBooking.Booking_comment__c + '\n Discount: '+discount+'% ('+(parseFloat(totPrice)-parseFloat(totalprice)).toFixed(2)+')';
+                // }
+                objBooking.Sub_Total__c = subtotal;
+                objBooking.Total_taxed__c = parseFloat(totalprice);
+                
+                // console.log('Booking ::: '+objBooking);
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.UnitBookingByOwnerController.BookUnitWrapper}',objBooking , bookingStartDate, bookingEndDate, unitName, selectedCardId, defaultSourceId, true, 
+                    function (result, event) {
+                        $('#divProcessing').hide();
+                        if (event.status) {
+                            if(result.isError){
+                                if(
+                                    result.contactId != undefined && result.contactId != null &&
+                                    (objBooking.Billing_Contact__c == undefined || objBooking.Billing_Contact__c == null)
+                                ){
+                                    objBooking.Billing_Contact__c = result.contactId;
+                                    applyGuestFoundMessage();
+                                }
+
+                                var errmsg = '';
+                                for(var i=0; i<result.errMsgs.length; i++){
+                                    errmsg += '<li>'+result.errMsgs[i]+'</li>';
+                                }
+
+                                var d = getMessagebox();
+                                d = d.replace('{title}','Error Message');
+                                d = d.replace('{message}',errmsg);
+                                var btnclose = '<button class="slds-button slds-button--neutral btnCloseMessagebox">Close</button>';
+                                d = d.replace('{cancelbutton}',btnclose);
+                                d = d.replace('{actionbutton}','');
+                                $('.slds').find('#divMessagebox').remove();
+                                $('.slds').append(d);
+                                $(this).blur();
+                                return false;
+                            }else{
+                                var d = getMessagebox();
+                                d = d.replace('{title}','Confirmation');
+                                d = d.replace('{message}','Booking is Succesfully Done.');
+                                var btnclose = '<button class="slds-button slds-button--neutral btnCloseBookingMessagebox">Close</button>';
+                                d = d.replace('{cancelbutton}',btnclose);
+                                d = d.replace('{actionbutton}','');
+                                $('.slds').find('#divMessagebox').remove();
+                                $('.slds').append(d);
+                                window.setTimeout(function() {
+                                    if(typeof sforce != 'undefined' && sforce != null) {
+                                        sforce.one.navigateToSObject(result.recordId);
+                                    } else {
+                                        window.top.location.href = '/'+result.recordId;
+                                    }
+                                }, 100);
+                            }
+                        } else if (event.type === 'exception') {
+                            // alert(event.message + ' :: ' + event.where);
+                            var d = getMessagebox();
+                            d = d.replace('{title}','Error Message');
+                            d = d.replace('{message}',event.message + ' :: ' + event.where);
+                            var btnclose = '<button class="slds-button slds-button--neutral btnCloseMessagebox">Close</button>';
+                            d = d.replace('{cancelbutton}',btnclose);
+                            d = d.replace('{actionbutton}','');
+                            $('.slds').find('#divMessagebox').remove();
+                            $('.slds').append(d);
+                            $(this).blur();
+                            return false;
+                        } else {
+                            alert(event.message);
+                        }
+                    },
+                    { buffer: true, escape: true, timeout: 120000 }
+                );
+            } else {
+                var errmsg = '';
+                
+                if(
+                    (
+                        (discount && discount>=100) 
+                        || (!totalprice || totalprice<=0)
+                    ) 
+                    && !privateComment)
+                {
+                    errmsg = '<li>"Private Comment" is required for 100% or more discount or Final Price of $0 bookings</li>';
+                }else if($("#updateCardDetails").is(':checked')){
+                    if(!isValidCardNumber(cardnumber))
+                        errmsg += '<li>Enter valid Credit Card Number</li>';
+                    if(isBlank(expmonth) || isBlank(expyear))
+                        errmsg += '<li>Enter valid Expiration Date</li>';  
+                    else if(!isValidExpiration(expmonth, expyear)){
+                        errmsg += '<li>Expiration Date must be in future</li>';   
+                    }
+                    if(isBlank(nameoncard))
+                        errmsg += '<li>Enter valid Card Name</li>';   
+                    if(!isValidCVV(cardcvv))
+                        errmsg += '<li>Enter valid CVV</li>';     
+                    if(isBlank(zipcode))
+                        errmsg += '<li>Enter valid Zip Code</li>';     
+                }else if(savedCards != undefined && savedCards != null && savedCards.length>0 && 
+                    (selectedCardId==undefined || selectedCardId.trim().length==0)
+                ){
+                    errmsg = '<li>Please select either an existing card or add details to pay with new card</li>';
+                }
+                
+                var d = getMessagebox();
+                d = d.replace('{title}','Message');
+                d = d.replace('{message}',errmsg);
+                var btnclose = '<button class="slds-button slds-button--neutral btnCloseMessagebox">Close</button>';
+                d = d.replace('{cancelbutton}',btnclose);
+                d = d.replace('{actionbutton}','');
+                $('.slds').find('#divMessagebox').remove();
+                $('.slds').append(d);
+                $(this).blur();
+                return false;
+            }
+        });
+        
+        function isValidCardNumber(cardnumber){
+            return (cardnumber != undefined && !isNaN(cardnumber) && cardnumber.trim().length >= 12 && cardnumber.trim().length <= 16);
+        }
+
+        function isValidExpiration(expmonth, expyear){
+            var todayDate = new Date();
+            var expDate = new Date(expyear,expmonth,0);
+            if(expDate<todayDate)
+                return false;
+
+            return true;   
+        }
+
+        function isBlank(tempVar){
+            return (tempVar == undefined || tempVar.trim().length == 0);
+        }
+
+        function isValidCVV(cardcvv){
+            return (cardcvv != undefined && !isNaN(cardcvv) && cardcvv.trim().length >= 3 && cardcvv.trim().length <= 4);
+        }
+
+        function bindFiltersOnChange(){
+            $(document).on('change','#selCity,#txtNoofguests,#dtFromDate,#dtToDate',function(){
+                $('#divavilableunits').hide();
+            });
+        }
+        $(document).on('click','.btnNextToPayment',function(){
+            var firstname = $('#txtFirstName').val();
+            var lastname = $('#txtLastName').val();
+            var email = $('#txtEmail').val();
+            var phone = $('#txtPhoneNumber').val();
+            var startdate = $('#txtBookingStartDate').html();
+            var enddate = $('#txtBookingEndDate').html();
+            var totaltax = $('#txtTotalTaxed').val();
+            //var salesChannel = ({!userModel.isStandardUser}) ? $('#selSalesChannel').val() : 'manual';
+            var salesChannel = 'manual';
+            var totalprice = ({!userModel.isStandardUser}) ? $('#bttotalprice').val() : $('#bttotalpriceText').html();
+            totalprice = parseFloat(totalprice.replace('$',''));
+            
+            $('div#ccPanel').hide();
+            
+            //email validation
+            if(email != null && email != '' && !isValidEmail(email)){
+                var d = getMessagebox();
+                d = d.replace('{title}','Message');
+                d = d.replace('{message}','Please enter a valid email address.');
+                var btnclose = '<button class="slds-button slds-button--neutral btnCloseMessagebox">Close</button>';
+                d = d.replace('{cancelbutton}',btnclose);
+                d = d.replace('{actionbutton}','');
+                $('.slds').find('#divMessagebox').remove();
+                $('.slds').append(d);
+                $(this).blur();
+                return false;
+            }
+            var isValidValue = false;            
+            if({!!userModel.isStandardUser}){
+                var conModel = JSON.parse('{!userModel.conModel}');
+                if(conModel && conModel.contact != undefined){
+                    var con = conModel.contact;                
+                    if((con.FirstName || firstname) && (con.LastName || lastname) && (con.Email || email) && (con.Phone || phone)){
+                        isValidValue = true;
+                    }
+                }                
+            }else{
+                isValidValue = true;
+            }
+            
+            if( (isValidValue && ({!!userModel.isStandardUser} || (firstname != null && firstname != '' && lastname != null && lastname != '' && email != null && email != '' && phone != null && phone != '')) &&
+                    startdate != null && startdate != '' && enddate != null && enddate != '') 
+            ){
+                objBooking.Total_taxed__c = parseFloat(totaltax);
+                objBooking.Start_date__c = Date.parse(startdate); 
+                objBooking.End_date__c = Date.parse(enddate);
+                objBooking.Sales_channel__c = salesChannel;
+                
+                if({!userModel.isStandardUser}){
+                    objBooking.Firstname__c = firstname;
+                    objBooking.Lastname__c = lastname;
+                    objBooking.Email__c = email;
+                    objBooking.Phone_number__c = phone;                    
+                }
+                if(phone){
+                    objBooking.Phone_number__c = phone;
+                }
+                if(firstname){
+                    objBooking.Firstname__c = firstname;
+                }
+                if(email){
+                    objBooking.Email__c = email;
+                }
+                if(lastname){
+                    objBooking.Lastname__c = lastname;
+                }
+                $('div#bookingContent').hide();
+                
+                if($('a#booking') != undefined) {
+                    $('a#booking').closest('li').removeClass('slds-is-current').addClass('slds-is-complete');
+                }
+                if($('a#payment') != undefined){
+                    $('a#payment').closest('li').removeClass('slds-is-incomplete').addClass('slds-is-current');
+                }
+                $('div#paymentContent').show();
+                if(salesChannel != 'manual'){
+                    objBooking.External_code__c = $('#externalCode').val();
+                } else if(salesChannel == 'manual'){
+                    objBooking.External_code__c = salesChannel;
+                }
+
+                $('#cardsPanel').html('');
+                $('#cardsPanel').hide();
+                var totalDays = (objBooking.End_date__c-objBooking.Start_date__c)/(1000 * 3600 * 24);
+                
+                if(salesChannel != 'airbnb' && totalprice && totalprice>0){
+                    $('div#ccPanel').show();
+
+                    if(totalDays<=30 && savedCards != undefined && savedCards != null && savedCards.length>0){
+                        var cardsHTML = '<h3 class="slds-section-title--divider">Saved Card(s) from Last booking</h3><br/>';
+                        for(var i=0; i<savedCards.length;i++){
+                            var ccModel = savedCards[i];
+                            selectedCardId = (ccModel.isDefaultSource ? ccModel.cardId : selectedCardId);
+                            defaultSourceId = selectedCardId;
+                            cardsHTML += '<div class="slds-grid container">'+
+                                            '<div class="slds-col slds-size_12-of-12 sldsOverrightLineHeight">'+
+                                                '<span class="slds-radio_button sldsfullwidth">'+
+                                                    '<input '+(ccModel.isDefaultSource ? 'checked="true" ' : '')+'type="radio" id="'+ccModel.cardId+'" name="radioSavedCards" onclick="selectPaymentMethod(\''+ccModel.cardId+'\')" class="slds-radio"  />'+
+                                                    '<label class="slds-radio_button__label sldsfullwidth slds-size_12-of-12" for="'+ccModel.cardId+'">'+
+                                                        '<span class="slds-radio_faux radioLabel">'+
+                                                            '<div class="slds-grid slds-wrap">'+
+                                                                '<div class="slds-col slds-size_2-of-5 slds-x-small-size_1-of-1 slds-small-size_2-of-5 slds-m-vertical_x-small">'+
+                                                                    '<span>'+ccModel.cardName+'</span>'+
+                                                                '</div>'+
+                                                                '<div class="slds-col slds-size_1-of-5 slds-x-small-size_1-of-1 slds-small-size_1-of-5 slds-m-vertical_x-small">'+
+                                                                    '<span>XX'+ccModel.cardNumber+'</span>'+
+                                                                '</div>'+
+                                                                '<div class="slds-col slds-size_1-of-5 slds-x-small-size_1-of-1 slds-small-size_1-of-5 slds-m-vertical_x-small">'+
+                                                                    '<span>'+ccModel.cardType+'</span>'+
+                                                                '</div>'+
+                                                               
+                                                                '<div class="slds-col slds-size_1-of-5 slds-x-small-size_1-of-1 slds-small-size_1-of-5 slds-m-vertical_x-small">'+
+                                                                    '<span>'+ccModel.expMonth+'/'+ccModel.expYear+'</span>'+
+                                                                '</div>'+
+                                                            '</div>'+
+                                                        '</span>'+
+                                                    '</label>'+
+                                                '</span>'+
+                                            '</div>'+
+                                        '</div>';
+                        }
+
+                        $("#updateCardDetails").prop("checked",false);
+                        $("#updateCardDetails").prop("disabled",false);
+
+                        //$('#cardsPanel').html(cardsHTML);
+                        $('#cardsPanel').show();
+                        $('#ccDetailPanel').hide();
+                        $('#updateCardDetails').trigger('click');
+                        $('#updateCardDetails').prop("disabled",true);
+                        //showHideCardPanel();
+                    }else{
+                        $("#updateCardDetails").prop("checked",true);
+                        $("#updateCardDetails").prop("disabled",true);
+                        $('#ccDetailPanel').show();
+                        selectedCardId = 'newCard';
+                    }
+                }
+            } else {
+                var d = getMessagebox();
+                d = d.replace('{title}','Message');
+                d = d.replace('{message}','All the details are required. Please fill all the details.');
+                var btnclose = '<button class="slds-button slds-button--neutral btnCloseMessagebox">Close</button>';
+                d = d.replace('{cancelbutton}',btnclose);
+                d = d.replace('{actionbutton}','');
+                $('.slds').find('#divMessagebox').remove();
+                $('.slds').append(d);
+                $(this).blur();
+                return false;
+            }
+        });
+        
+        function selectPaymentMethod(cardId){
+            selectedCardId = cardId;
+            $("#updateCardDetails").prop('checked', false);
+            $('#ccDetailPanel').hide();
+        }
+        function showHideCardPanel(){
+            if($("#updateCardDetails").is(':checked')){
+                selectedCardId = 'newCard';
+                $('#ccDetailPanel').show();
+                $("input[name='radioSavedCards']:checked").prop("checked",false);
+            }else{
+                $('#ccDetailPanel').hide();
+                selectedCardId = '';
+            }
+        }
+        /*$(document).on('click','.btnNextToBooking',function(){
+            var selectedUnits = $(".chkUnit:checked");
+            if(selectedUnits != null && selectedUnits.length > 0 && selectedUnits.length == 1) {
+                selectedUnits.each(function(e){
+                    var dataid = $(this).attr('data-id');
+                    objBooking.Product__c = dataid;
+                    var totalprice = $('[class=totalprice-'+dataid +']').attr('data-price');
+                    var bookingComments = $('input[data-id='+dataid+']').attr('description');
+                    objBooking.Total_taxed__c = totalprice;
+                    objBooking.Booking_comment__c = bookingComments;
+                    
+                    var UnitName = $(this).attr('data-name');
+                    var sub = $(this).attr('unitsubtotal');
+                    var cleanfee = $(this).attr('unitcleaningfee');
+                    var tax = $(this).attr('unittax');
+                    totPrice = $(this).attr('data-totalPrice');
+                    // var dis = $(this).attr('data-discount');
+                    $('#pcunit').html(UnitName);
+                    $('#pcsubtotal').html("$" + sub);
+                    $('#pccleaningfee').html("$" + ((cleanfee != undefined || cleanfee != '') ? cleanfee : '0'));
+                    $('#pctax').html("$" + tax);
+                    // $('#pcdis').val();
+                    $('#pctotalprice').html("$" + totPrice);
+
+                    $('#bttotalprice').val(totPrice);
+                    $('#btunit').html(UnitName);
+                    $('#btsubtotal').html("$" + sub);
+                    $('#btcleaningfee').html("$" + ((cleanfee != undefined || cleanfee != '') ? cleanfee : '0'));
+                    $('#bttax').html("$" + tax);
+                });
+
+                objBooking.Status__c = 'Active';
+                $('#txtBookingStartDate').html(objBooking.Start_date__c);
+                $('#txtBookingEndDate').html(objBooking.End_date__c);
+                $('#txtTotalTaxed').html(objBooking.Total_taxed__c);
+                $('div#searchContent').hide();
+                $('a#search').closest('li').removeClass('slds-is-current').addClass('slds-is-complete');
+                $('a#booking').closest('li').removeClass('slds-is-incomplete').addClass('slds-is-current');
+                $('div#bookingContent').show();
+                $('.externalCodeDiv').hide();
+            } else {
+                var d = getMessagebox();
+                d = d.replace('{title}','Message');
+                if(selectedUnits != null && selectedUnits.length > 1) {
+                    d = d.replace('{message}','You can not select more than one Unit.');
+                } else {
+                    d = d.replace('{message}','Please select at lease one Unit to Proceed Booking');
+                }
+                var btnclose = '<button class="slds-button slds-button--neutral btnCloseMessagebox">Close</button>';
+                d = d.replace('{cancelbutton}',btnclose);
+                d = d.replace('{actionbutton}','');
+                $('.slds').find('#divMessagebox').remove();
+                $('.slds').append(d);
+                $(this).blur();
+                return false;
+            }
+            
+        });*/
+
+        $(document).on('click','.btnIndUnitBooking',function(){
+            var dataid = $(this).attr('data-id');
+            unitName = $(this).attr('data-name');
+            objBooking.Product__c = dataid;
+            var totalprice =  $(this).attr('data-totalPrice'); // $('td[class=totalprice-'+dataid +']').attr('data-price');
+            var bookingComments = $(this).attr('description'); //$('input[data-id='+dataid+']').attr('description');
+            objBooking.Total_taxed__c = totalprice;
+            objBooking.Booking_comment__c = bookingComments;
+            
+            var UnitName = $(this).attr('data-name');
+            unitPrice = !isNaN($(this).attr('unitsubtotal')) ? parseFloat($(this).attr('unitsubtotal')).toFixed(2) : 0.00;
+            unitCleanfee =  !isNaN($(this).attr('unitcleaningfee')) ? parseFloat($(this).attr('unitcleaningfee')).toFixed(2) : 0.00;
+            var tax = !isNaN($(this).attr('unittax')) ? parseFloat($(this).attr('unittax')).toFixed(2) : 0.00;
+            var totPrice = !isNaN($(this).attr('data-totalPrice')) ? parseFloat($(this).attr('data-totalPrice')).toFixed(2) : 0.00;
+            
+            unitTax = !isNaN($(this).attr('data-unitTaxRate')) ? parseFloat($(this).attr('data-unitTaxRate')) : 0.00;
+           
+
+            var utype = $(this).attr('data-ut');
+            var Neighborhood = $(this).attr('nghbrhd');
+            var Noofguest = $('#txtNoofguests').val();
+            // console.log(Neighborhood);
+            // console.log(utype);
+            // var dis = $(this).attr('data-discount');
+            $('#pcunit').html(UnitName);
+            $('#pcsubtotal').html("$" + unitPrice);
+            $('#pccleaningfee').html("$" + unitCleanfee);
+            $('#pctax').html("$" + tax);
+            $('#pctotalprice').html("$" + totPrice);
+
+            if({!userModel.isStandardUser}){
+                $('#bttotalprice').val(totPrice);
+                $('#pcTotalPriceRef').html("$" + unitPrice);
+                $('#btTotalPriceRef').html("$" + unitPrice);
+                $('#pcdis').html("0.00%");
+            }else
+                $('#bttotalpriceText').html("$" + totPrice);
+
+            $('#btunit').html(UnitName);
+            $('#btsubtotal').html("$" + unitPrice);
+            $('#btcleaningfee').html("$" + unitCleanfee);
+            $('#bttax').html("$" + tax);
+            $('#btneighbor').html(Neighborhood);
+            $('#btunittype').html(utype);
+            $('#btguest').html(Noofguest+" guest");
+
+            objBooking.Status__c = 'Active';
+            $('#txtBookingStartDate').html(GetFormattedDate(objBooking.Start_date__c));
+            $('#txtBookingEndDate').html(GetFormattedDate(objBooking.End_date__c));
+            $('#txtTotalTaxed').html(objBooking.Total_taxed__c);
+            $('div#searchContent').hide();
+            $('a#search').closest('li').removeClass('slds-is-current').addClass('slds-is-complete');
+            $('a#booking').closest('li').removeClass('slds-is-incomplete').addClass('slds-is-current');
+            $('a#payment').closest('li').removeClass('slds-is-current').addClass('slds-is-incomplete');
+            $('div#bookingContent').show();
+            //$('.externalCodeDiv').hide();
+        });
+        
+        function GetFormattedDate(dt) {
+            var newdate = new Date(dt);
+            var month = newdate.getMonth() + 1;
+            var day = newdate.getDate();
+            var year = newdate.getFullYear();
+            return month + "/" + day + "/" + year;
+        }
+        
+        if({!userModel.isStandardUser} && {!userModel.isBookingAllowed}){
+            $(document).on('change','#selSalesChannel',function(){
+                var selSalesChannel = $('#selSalesChannel').val();
+                // console.log(selSalesChannel);
+                if(selSalesChannel != 'manual'){
+                    $('.externalCodeDiv').show();
+                    $('.blankDiv').hide();
+                } else {
+                    $('.externalCodeDiv').hide();
+                    $('.blankDiv').show();
+                }
+               
+            });
+        }
+
+        $(document).on('click','.btnSearchUnit',function(){
+            fnSearchUnit();
+            $(this).blur();
+            return false;
+        });
+        
+        $(document).on('click','.btnClear',function(){
+            $('#dtFromDate').val('');
+            $('#dtToDate').val('');
+            $('#selCity').val('');
+            $('#txtNoofguests').val('1');
+            $('#divavilableunits').hide();
+            $('table.tblavailableunits').find('tbody').empty();
+            //for sf1
+            $('ul#ulavailableunits').empty();
+        });
+
+        function fnSearchUnit(){
+            var showLink = ({!userModel.isStandardUser});
+            var isBookingAllowed = ({!userModel.isBookingAllowed});
+
+            if(isBookingAllowed){
+                var dtFromDate = $('#dtFromDate').val();
+                var dtToDate = $('#dtToDate').val();
+                var city = $('#selCity').val();
+                var Noofguest = $('#txtNoofguests').val();
+                //var totalDays = (new Date(dtToDate)-new Date(dtFromDate))/(1000 * 3600 * 24);
+               
+                objBooking.Start_date__c = dtFromDate; 
+                objBooking.End_date__c = dtToDate;
+                objBooking.Travelers__c = Noofguest;
+
+                var todayDate = (new Date()).setHours(0,0,0,0);  
+                var errmsg = '';
+                if((dtFromDate != undefined && (dtFromDate == null || dtFromDate == '')) || (dtToDate != undefined && (dtToDate == null || dtToDate == '')))
+                {
+                    errmsg = 'Please select date to search Unit.';
+                }else if(Date.parse(dtToDate) <= Date.parse(dtFromDate))
+                    errmsg = 'To Date should be greater than From Date.';
+                else if((new Date(dtFromDate) < todayDate || new Date(dtToDate) < todayDate)){
+                    errmsg = 'From Date must be in present or future.';
+                }
+
+                if(errmsg){
+                    var d = getMessagebox();
+                    d = d.replace('{title}','Message');
+                    d = d.replace('{message}',errmsg);
+                    var btnclose = '<button class="slds-button slds-button--neutral btnCloseMessagebox">Close</button>';
+                    d = d.replace('{cancelbutton}',btnclose);
+                    d = d.replace('{actionbutton}','');
+                    $('.slds').find('#divMessagebox').remove();
+                    $('.slds').append(d);
+                    $(this).blur();
+                    return false;
+                }
+
+                /*
+                if((dtFromDate != undefined && (dtFromDate == null || dtFromDate == '')) || (dtToDate != undefined && (dtToDate == null || dtToDate == ''))){
+                    var d = getMessagebox();
+                    d = d.replace('{title}','Message');
+                    d = d.replace('{message}','Please select date to search Unit.');
+                    var btnclose = '<button class="slds-button slds-button--neutral btnCloseMessagebox">Close</button>';
+                    d = d.replace('{cancelbutton}',btnclose);
+                    d = d.replace('{actionbutton}','');
+                    $('.slds').find('#divMessagebox').remove();
+                    $('.slds').append(d);
+                    $(this).blur();
+                    return false;
+                }
+                
+                if(Date.parse(dtToDate) <= Date.parse(dtFromDate)){
+                    var d = getMessagebox();
+                    d = d.replace('{title}','Message');
+                    d = d.replace('{message}','To Date should be greater than From Date.');
+                    var btnclose = '<button class="slds-button slds-button--neutral btnCloseMessagebox">Close</button>';
+                    d = d.replace('{cancelbutton}',btnclose);
+                    d = d.replace('{actionbutton}','');
+                    $('.slds').find('#divMessagebox').remove();
+                    $('.slds').append(d);
+                    $(this).blur();
+                    return false;
+                }*/
+
+                $('#divProcessing').show();
+                $('#divavilableunits').show();
+                
+                $('ul#ulavailableunits').empty();
+                $('table.tblavailableunits').find('tbody').empty();
+                
+                var temptr = temptr + '<tr><td>'+
+                                        (
+                                            showLink 
+                                            ? '<a href="/owner/s/detail/{buildingid}" target="_blank"> {buildingname} </a>' 
+                                            : '{buildingname}'
+                                        )+
+                                    '</td>';
+                //adding unit virtual link to unit name
+                temptr = temptr + '<td class="slds-grow slds-cell-wrap">'+
+                                    (
+                                        showLink 
+                                        ? '{Virtual_Tour_URL__c}' 
+                                        : '{Virtual_Tour_URL__c}'
+                                    )+
+                                '</td>';
+                temptr = temptr + '<td>{unittype}</td><td class="slds-grow slds-cell-wrap">{neighbour}</td><td>${AvgPrice}</td><td>${ExtraGuestPrice}</td><td>${cleaningfee}</td><td>${tax}</td><td class="totalprice-{unitid}" data-price="{totalprice}">${totalprice}</td>';
+                temptr = temptr + '<td align="center">\
+                                  <button  data-id="{unitid}" description="{bookingcomments}" class="chkUnit btnIndUnitBooking slds-button slds-button--brand" id="{unitid}" data-unitTaxRate="{unitTaxRate}"  unitsubtotal="{subtotal}" unittax="{tax}" unitcleaningfee="{cleaningfee}" data-name="{unit-name}" data-totalPrice="{total-price}" nghbrhd="{neighbour}" data-ut="{unittype}" disabled="{disable}">Book</button>\
+                                </td></tr>';
+                
+                var templi = '<li class="slds-accordion__list-item"> \
+                             <section class="slds-accordion__section"> \
+                              <div class="slds-accordion__summary"> \
+                                <h3 class="slds-accordion__summary-heading"> \
+                                  <button class="slds-button slds-button_reset slds-accordion__summary-action btnAccordian"> \
+                                    <svg class="slds-accordion__summary-action-icon slds-button__icon slds-button__icon_left" > \
+                                      <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Resource.lightning, '/assets/icons/utility-sprite/svg/symbols.svg#switch')}" /> \
+                                    </svg> \
+                                    <span title="{unitname}">{unitname}</span> \
+                                  </button> \
+                                </h3> \
+                              </div> \
+                              <div class="slds-accordion__content"><div style="padding:10px;background-color:white;">{unitcontent}</div></div> \
+                            </section>';
+
+                            
+
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.UnitBookingByOwnerController.allUnits}',city, dtFromDate, dtToDate, Noofguest, '', true, null, 
+                    function (result, event) {
+                        $('#divProcessing').hide();
+                        if (event.status) {
+                            if(result != undefined && result.length > 0){
+                                $.map(result,function(unit,i){
+                                    if({!UserisOnSalesforce1} == true){
+                                        var newli = templi;
+                                        newli = replaceAll(newli,'{unitname}', unit.UnitName + '<br/>Total Price: $'+ unit.TotalPrice);
+                                        var unitcnt = '';
+                                        if(unit.VirtualTourURL){
+                                            /* updated by Tarun-Kandsa - May 22, 2019*/
+                                            unitcnt += '<a class="virtualTourcontainer" style="height:200px;" data-fancybox data-type="iframe" data-src="'+unit.VirtualTourURL+'&play=1" href="javascript:;"><image class="virtualTourThumbnail" src="'+unit.VirtualTourThumb+'" style="width:100%;height:100%"/> <img src="{!URLFOR($Resource.play_owner_icon)}" class="playOverlay"/></a>';
+                                        }
+                                        unitcnt += '<div>Building - <b>'+unit.BuildingName + '</b></div>';
+                                        unitcnt += '<div>UnitType - <b>'+unit.UnitType+'</b></div>';
+                                        unitcnt += '<div>Neighborhood - <b>'+unit.Neighborhood +'</b></div>';
+                                        unitcnt += '<div>Average Price - <b>$'+(unit.AvgPrice ? (unit.AvgPrice) : 0)+'</b></div>';
+                                        unitcnt += '<div>Extra Guest Price - <b>$'+unit.ExtraGuestPrice+'</b></div>';
+                                        unitcnt += '<div>Cleaning Fee - <b>$'+unit.CleaningFee+'</b></div>';
+                                        unitcnt += '<div>Total Tax - <b>$'+unit.TotalTax+'</b></div>';
+                                        unitcnt += '<div class="totalprice-'+unit.UnitId+'" data-price="'+unit.TotalPrice+'">Total Price - <b>$'+unit.TotalPrice+'</b></div>';
+                                        if(unit.AvgPrice != '' && unit.AvgPrice >= 0){
+                                            var btn = '<button  data-id="{unitid}" description="{bookingcomments}" class="chkUnit btnIndUnitBooking slds-button slds-button--brand" id="{unitid}" unitsubtotal="{subtotal}" unittax="{tax}" data-unitTaxRate="{unitTaxRate}" unitcleaningfee="{cleaningfee}" data-name="{unit-name}" data-totalPrice="{total-price}" nghbrhd="{neighbour}" data-ut="{unittype}">Book</button>';
+                                            btn = replaceAll(btn ,'{unitid}',unit.UnitId);
+                                            btn = btn.replace('{bookingcomments}',unit.BookingComments);
+                                            btn = btn.replace('{subtotal}',unit.SubTotal);
+                                            btn = btn.replace('{tax}',unit.TotalTax).replace('{tax}',unit.TotalTax);
+                                            btn = btn.replace('{cleaningfee}',unit.CleaningFee);
+                                            btn = btn.replace('{unit-name}',unit.UnitName);
+                                            btn = btn.replace('{total-price}',unit.TotalPrice);
+                                            btn = btn.replace('{unittype}',unit.UnitType)
+                                            btn = btn.replace('{neighbour}',(unit.Neighborhood != undefined ? unit.Neighborhood : ''));
+                                            btn = btn.replace('{unitTaxRate}',unit.TaxRate);
+                                            unitcnt += '<div style="padding-top:5px;">'+ btn +'</div>';
+                                        }
+                                        newli = newli.replace('{unitcontent}',unitcnt);
+                                        $('ul#ulavailableunits').append(newli);
+                                        
+                                    } else {
+                                        var newtr = temptr;
+                                        newtr = replaceAll(newtr,'{unitid}',unit.UnitId);
+                                        newtr = newtr.replace('{unitname}',unit.UnitName);
+                                        
+                                        //adding unit virtual link to unit name
+                                        if(unit.VirtualTourURL){
+                                            var virtualTourLink = 
+                                                /* updated by Tarun-Kandsa - May 22, 2019*/
+                                                '<a class="virtualTourcontainer" data-fancybox data-type="iframe" data-src="'+unit.VirtualTourURL+'&play=1" href="javascript:;"><image class="virtualTourThumbnail" src="'+unit.VirtualTourThumb+'" /> <img src="{!URLFOR($Resource.play_owner_icon)}" class="playOverlay"/></a>';
+                                                //'<a href="'+unit.VirtualTourURL+'" target="_blank"> '+unit.UnitName+' </a>';
+                                            newtr = newtr.replace('{Virtual_Tour_URL__c}',virtualTourLink);
+                                        }
+                                        else
+                                            newtr = newtr.replace('{Virtual_Tour_URL__c}',unit.UnitName);
+
+                                        newtr = newtr.replace('{buildingid}',unit.BuildingId);
+                                        newtr = newtr.replace('{bookingcomments}',unit.BookingComments);
+                                        newtr = newtr.replace('{buildingname}',unit.BuildingName );
+                                        newtr = newtr.replace('{totalprice}',unit.TotalPrice).replace('{totalprice}',unit.TotalPrice);
+                                        newtr = newtr.replace('{unittype}',unit.UnitType).replace('{unittype}',unit.UnitType);
+                                        newtr = newtr.replace('{neighbour}',(unit.Neighborhood != undefined ? unit.Neighborhood : '')).replace('{neighbour}',(unit.Neighborhood != undefined ? unit.Neighborhood : ''));
+                                        newtr = newtr.replace('{AvgPrice}',(unit.AvgPrice ? (unit.AvgPrice) : 0));
+                                        newtr = newtr.replace('{subtotal}',unit.SubTotal);
+                                        newtr = newtr.replace('{tax}',unit.TotalTax).replace('{tax}',unit.TotalTax);
+                                        newtr = newtr.replace('{cleaningfee}',unit.CleaningFee).replace('{cleaningfee}',unit.CleaningFee);
+                                        newtr = newtr.replace('{unit-name}',unit.UnitName);
+                                        newtr = newtr.replace('{total-price}',unit.TotalPrice);
+                                        newtr = newtr.replace('{ExtraGuestPrice}',unit.ExtraGuestPrice);
+                                        newtr = newtr.replace('{unitTaxRate}',unit.TaxRate);
+                                        if(unit.AvgPrice == 0 || unit.AvgPrice == ''){
+                                            newtr = newtr.replace('{disable}',"true");
+                                        } else {
+                                            newtr = newtr.replace('disabled="{disable}"','');
+                                        }
+                                        $('table.tblavailableunits').find('tbody').append(newtr);
+                                    }
+                                });
+                            } else {
+                                if({!UserisOnSalesforce1} == true){
+                                    var newli = templi;
+                                    newli = replaceAll(newli,'{unitname}', 'No records to display.');
+                                    newli = newli.replace('{unitcontent}','');
+                                    $('ul#ulavailableunits').append(newli);
+                                } else {
+                                    $('table.tblavailableunits').find('tbody').append('<tr><td colspan="100%">No records to display.</td></tr>');
+                                }
+                            }
+                            //fnheightcalculation();
+                        } else if (event.type === 'exception') {
+                            // alert(event.message + ' ' + event.where);
+                            $('#divavilableunits').hide();
+                            var d = getMessagebox();
+                            d = d.replace('{title}','Error Message'+ ' :: ' + event.where);
+                            d = d.replace('{message}',event.message);
+                            var btnclose = '<button class="slds-button slds-button--neutral btnCloseMessagebox">Close</button>';
+                            d = d.replace('{cancelbutton}',btnclose);
+                            d = d.replace('{actionbutton}','');
+                            $('.slds').find('#divMessagebox').remove();
+                            $('.slds').append(d);
+                            $(this).blur();
+                            return false;
+                        } else {
+                            alert(event.message);
+                            $('#divavilableunits').hide();
+                        }
+                    },
+                    { buffer: true, escape: true, timeout: 120000 }
+                );
+                //window.setTimeout(function() {
+                //    $('#divProcessing').hide();
+                //}, 2000);
+            }
+        }
+        
+        function replaceAll(str, find, replace) {
+            return str.replace(new RegExp(find, 'g'), replace);
+        }
+        
+        $(document).on('click','.btnAccordian',function(){
+            var selected = false;
+            if($(this).closest('.slds-accordion__list-item').hasClass('slds-is-open')){
+                selected = true;
+            }
+            if(selected == false){
+                $(this).closest('.slds-accordion__list-item').addClass('slds-is-open');
+            } else {
+                $(this).closest('.slds-accordion__list-item').removeClass('slds-is-open');
+            }
+        });
+
+        function showPopup(title, msgs){
+            var d = getMessagebox();
+            d = d.replace('{title}',title);
+            d = d.replace('{message}',msgs);
+            var btnclose = '<button class="slds-button slds-button--neutral btnCloseMessagebox">Close</button>';
+            d = d.replace('{cancelbutton}',btnclose);
+            d = d.replace('{actionbutton}','');
+            $('.slds').find('#divMessagebox').remove();
+            $('.slds').append(d);
+            $(this).blur();
+            return false;
+        }
+
+        
+        
+        function isValidEmail(emailAddress) {
+            var pattern = new RegExp(/^(("[\w-\s]+")|([\w-]+(?:\.[\w-]+)*)|("[\w-\s]+")([\w-]+(?:\.[\w-]+)*))(@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$)|(@\[?((25[0-5]\.|2[0-4][0-9]\.|1[0-9]{2}\.|[0-9]{1,2}\.))((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){2}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\]?$)/i);
+            return pattern.test(emailAddress);
+        };
+        
+        function isValidPhoneOREmail(){
+            var email = $('#txtEmail').val();
+            var phone = $('#txtPhoneNumber').val(); 
+
+            var isError = false;
+            //
+            if((email == undefined || email.trim().length==0 || !isValidEmail(email)) &&
+                (phone == undefined || phone.trim().length==0)) {
+                isError = true;
+            }
+            return (!isError);
+        }
+
+        
+
+        function applyGuestFoundMessage(){
+            $("#guestMessageIcon").attr('xlink:href','{!URLFOR($Resource.lightning, 'assets/icons/utility-sprite/svg/symbols.svg#success')}');
+            $("#guestMessageBrand").removeClass('slds-theme_info');
+            $("#guestMessageBrand").addClass('slds-theme_success');
+            //$("#guestMessageBrand").attr('class','slds-notify slds-notify_toast slds-theme_success');
+
+            $("#guestMessagePanel .slds-notify__content .slds-text-heading_small").text('Matching guest found');
+        }
+
+        function applyGuestNotFoundMessage(){
+            $("#guestMessageIcon").attr('xlink:href','{!URLFOR($Resource.lightning, 'assets/icons/utility-sprite/svg/symbols.svg#info')}');
+            $("#guestMessageBrand").removeClass('slds-theme_success');
+            $("#guestMessageBrand").addClass('slds-theme_info');
+            //$("#guestMessageBrand").attr('class','slds-notify slds-notify_toast slds-theme_info');
+            
+            $("#guestMessagePanel .slds-notify__content .slds-text-heading_small").text('No record found, new guest will be created');
+            
+        }
+    </script>
+    
+    <apex:outputPanel >
+        <script>
+
+            // $(document).ready(function(o){
+            //     //alert(window.location.href + ' ' +window.innerHeight );
+
+            //     var windowHeight = window.innerHeight + 200;
+            //     document.body.style.height = windowHeight + "px";
+            // });
+        
+            $(document).on('change','#txtEmail,#txtPhoneNumber',function(){
+                var email = $('#txtEmail').val();
+                var phone = $('#txtPhoneNumber').val(); 
+                var fieldId = $(this).attr('id');//this.id
+                var thisValue = $(this).val();//this.value
+                if(isValidPhoneOREmail() && 
+                    (objBooking.Billing_Contact__c == undefined || objBooking.Billing_Contact__c == null)
+                ){
+                    $('#divProcessing').show();
+                    $('#cardsPanel').html('');
+    
+                    Visualforce.remoting.Manager.invokeAction(
+                        '{!$RemoteAction.UnitBookingByOwnerController.searchContact}', email, phone ,
+                        function (result, event) {
+                            if (event.status) {
+                                if(result != undefined && result != null){
+                                    var con = result.contact;
+                                    savedCards = result.ccModelList;
+                                    if(con.FirstName && con.FirstName.trim().length>0)
+                                        $('#txtFirstName').val(con.FirstName);
+                                    
+                                    $('#txtLastName').val(con.LastName);
+    
+                                    if(con.Email && con.Email.trim().length>0 && 
+                                        (
+                                            fieldId!='txtEmail' ||
+                                            (thisValue && thisValue.trim().length==0)
+                                        )
+                                    )
+                                        $('#txtEmail').val(con.Email);
+                                    if(con.Phone && con.Phone.trim().length>0 && 
+                                        (
+                                            fieldId!='txtPhoneNumber' ||
+                                            (thisValue && thisValue.trim().length==0)
+                                        )
+                                    )
+                                        $('#txtPhoneNumber').val(con.Phone); 
+                                    
+                                    objBooking.Billing_Contact__c = con.Id;
+                                    applyGuestFoundMessage();
+                                }else{ 
+                                    objBooking.Billing_Contact__c = null;  
+                                    savedCards = null;
+                                    applyGuestNotFoundMessage();
+    
+                                    //$('#txtFirstName').val('');
+                                    //$('#txtLastName').val('');
+    
+                                    /*$('#txtEmail').val(email);
+                                    $('#txtPhoneNumber').val(phone); 
+                                    
+                                    showPopup('Message', 'No matching record found.');*/
+                                } 
+    
+                                $("#guestMessagePanel").show();
+                            } else if (event.type === 'exception') {
+                                //showPopup('Error Message',event.message + ' :: ' + event.where);
+                            } else {
+                                //alert(event.message);
+                            }
+                            //$('div#guestPanel').show();
+                            //$('.btnNextToPayment').show();
+                            $('#divProcessing').hide();
+                        },
+                        { buffer: true, escape: true, timeout: 120000 }
+                    );
+                }
+                /*else{
+                    objBooking.Billing_Contact__c = null;
+                }*/
+            });
+            
+            $(document).on('click','.btnResetGuest',function(){
+                //resetting search panel guest details
+                //$('#txtEmailSearch').val('');
+                //$('#txtPhoneNumberSearch').val('');
+    
+                //resetting guest details
+                $('#txtFirstName').val('');
+                $('#txtLastName').val('');
+                $('#txtEmail').val('');
+                $('#txtPhoneNumber').val(''); 
+    
+                //blanking contact id in booking
+                objBooking.Billing_Contact__c = null;
+                //removing the message at top
+                $("#guestMessagePanel").hide();
+            });
+            
+        </script>
+        
+    </apex:outputPanel>
+    
+    <!------------- Start: Processing Div---------------------------------------->
+    <style>
+        .slds-button.slds-button_neutral:hover:active:focus:focus-within, .slds-button.slds-button--brand:hover:active:focus:focus-within, .slds-button.slds-button--neutral:hover:active:focus:focus-within {
+    background: #1D6C78 !important;
+    color: #fff !important;
+}
+.slds-button.slds-button_neutral, .slds-button.slds-button--brand, .slds-button.slds-button--neutral {
+    background: #1D6C78 !important;
+    color: #fff !important;
+}
+.slds-button a[role="button"], .slds-button a[role="button"]:hover:active:focus:focus-within { color: #fff !important; }
+
+        .slds-avatar--large {
+            width: 5rem;
+            height:5rem;
+        }
+        .fa-3 {
+            font-size: 1.5em;
+        }
+        .image-upload > input {
+            display: none;
+        }
+        .ProcessingBackground {
+            background-color: #fff;
+            opacity: 0.60;
+            filter: alpha(opacity = 50);
+            width: 100%;
+            height: 100%;
+            position: fixed;
+            z-index: 9998;
+            top:0;
+            left:0;
+        }
+        .Processing {
+            z-index: 9999;
+            left: 47.5%;
+            top: 50%;
+            text-align: center;
+            position: fixed;
+        } 
+
+        .slds-scope .slds-notify-container, .slds-scope .slds-notify_container{
+            z-index:9000;
+        }
+
+        .slds-grid+.slds-grid {
+            margin-top: 0.5rem;
+        }
+        .slds-radio_button [type=radio]:checked+.slds-radio_button__label{
+            /*background-color: rgb(118, 158, 218) !important;*/
+            /*background-color:rgb(98, 135, 191) !important;*/
+            background-color: rgba(98, 191, 109, 0.92) !important;
+            color:  rgb(255, 255, 255) !important;
+        }
+        .slds-radio_button [type=radio]:not(:checked)+.slds-radio_button__label:hover{
+            background-color: rgb(244, 246, 249) !important;
+        }
+        .slds-grid+.slds-grid {
+            margin-top: 0.5rem;
+        }
+        .slds-radio_button__label{
+            border: 1px solid #ccc;
+            border-radius: 0.25rem !important;
+            color: rgb(0, 112, 210) !important;
+        }
+        .radioLabel{
+            padding: 0px !important;
+        }
+
+        .uiBlock .bBody{
+            white-space:pre-wrap;
+        }
+        .slds-accordion__summary-heading {
+            font-weight: bold !important;
+        }
+        .slds-accordion__section {
+            background-color: #F3F2F2 !important;
+            margin-bottom:5px;
+            border-radius: 0.25rem!important;
+        }
+        /*body {
+            overflow:unset !important;
+        }*/
+        
+        /* added by Tarun-Kandsa - May 22, 2019*/
+
+        .fancybox-container {
+            height: 71%;
+        }
+        .fancybox-slide {
+            padding-left: 0px;
+            padding-right: 0px;
+        }
+        
+        .virtualTourcontainer{
+            position:relative;
+        }
+        .virtualTourcontainer:hover{
+            opacity:0.5;
+        }
+
+        .virtualTourcontainer .virtualTourThumbnail{
+            opacity: .7;
+        }
+        
+        .virtualTourcontainer .playOverlay{
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            -ms-transform: translate(-50%, -50%);
+            
+            color: white;
+            font-size: 16px;
+            /*padding: 12px 24px;
+            background-color: #555;*/
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            text-align: center;
+            height: 50px;
+            width: 50px;
+        }
+        /* added by Tarun-Kandsa - May 22, 2019*/
+    </style>
+    <div id="divProcessing" style="display:none;">
+        <div class="ProcessingBackground"></div>
+        <div class="Processing">           
+            <image alt="Processing" width="64" height="64" src="{!URLFOR($Resource.lightning, '/assets/images/spinners/slds_spinner_brand.gif')}" />
+        </div>
+        <apex:actionStatus id="Processing" onstart="document.getElementById('divProcessing').style.display = '';" onstop="document.getElementById('divProcessing').style.display = 'none';">                            
+        </apex:actionStatus>
+    </div>  
+    <!------------- End: Processing Div---------------------------------------->
+
+</apex:page>

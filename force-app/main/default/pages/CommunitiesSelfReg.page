@@ -1,0 +1,98 @@
+<apex:page id="communitiesSelfRegPage" showHeader="false" controller="CommunitiesSelfRegController" title="{!$Label.site.user_registration}">
+
+<style>
+  .standard_logo_wrapper {
+    height: 113px;
+    overflow: hidden;
+    width: 180px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+    display: table;
+  }
+
+  .mb24 { margin: 24px; }
+
+  .clsbox {
+    display: table;
+    width: 280px;
+  }
+
+  #content {
+
+    margin: 0px auto;
+        margin-bottom: 0px;
+    padding: 1.25rem;
+    border-radius: 0.25rem;
+    border: 1px solid rgb(216, 221, 230);
+    color: rgb(22, 50, 92);
+
+}
+
+#content input[type="text"]{
+  border: 2px solid;
+  border-color:rgb(216, 221, 230);
+  border-radius:4px;
+  padding: 5px;
+  width: 100%;
+}
+
+#content label{
+  font-size: 12px;
+  color: rgb(84, 105, 141);
+  margin: 0px 0px 8px;
+  line-height: inherit;
+}
+
+input.btn {
+
+background: #227E8F;
+font-size: 12px;
+padding: 8px 20px;
+color: #fff;
+
+}
+
+
+
+</style>
+
+<link rel="icon" href="{!$Site.Prefix}/file-asset/B_16X16_customer?v=1" type="image/png" />
+
+     <apex:define name="body">  
+      <center>
+<apex:form id="theForm" forceSSL="true">
+                    <div class="standard_logo_wrapper mb24">
+                      <apex:image url="{!$Site.Prefix}/file-asset/BarsalaLogoPrimaryTeal?v=1" width="250" height="125"/>
+                    </div>
+                    <div id="content" class="clsbox">
+                      <apex:pageMessages id="error"/>
+                      <apex:panelGrid columns="1" style="margin-top:1em;">
+                        <apex:outputLabel value="First Name" for="firstName"/>
+                        <apex:inputText required="true" id="firstName" value="{!firstName}" label="First Name"/>
+                        <apex:outputLabel value="Last Name" for="lastName"/>
+                        <apex:inputText required="true" id="lastName" value="{!lastName}" label="Last Name"/>
+                        <!--<apex:outputLabel value="{!$Label.site.community_nickname}" for="communityNickname"/>
+                        <apex:inputText required="true" id="communityNickname" value="{!communityNickname}" label="{!$Label.site.community_nickname}"/>-->
+                        <apex:outputLabel value="Phone" for="communityPhone"/>
+                        <apex:inputText required="true" id="communityPhone" value="{!communityPhone}" label="Phone"/>
+                        <apex:outputLabel value="{!$Label.site.email}" for="email"/>
+                        <apex:inputText required="true" id="email" value="{!email}" label="{!$Label.site.email}"/>
+                        <!--<apex:outputLabel value="{!$Label.site.password}" for="password"/>
+                        <apex:inputSecret id="password" value="{!password}"/>
+                        <apex:outputLabel value="{!$Label.site.confirm_password}" for="confirmPassword"/>
+                        <apex:inputSecret id="confirmPassword" value="{!confirmPassword}"/>
+                        <apex:outputText value=""/>-->
+                        <apex:outputPanel >
+                          <apex:commandButton action="{!registerUser}" value="{!$Label.site.register}" id="submit"/>
+                          <apex:commandButton value="{!$Label.site.go_to_login_page}"  immediate="true"  action="{!signupcancel}" id="cancel"/>
+                        </apex:outputPanel>
+                      </apex:panelGrid> 
+                    </div>
+                  <br/>
+</apex:form>
+     </center>
+      <br/>
+    </apex:define>
+
+</apex:page>

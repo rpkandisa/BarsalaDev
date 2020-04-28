@@ -1,0 +1,49 @@
+<apex:page StandardController="Xotelia_Booking__c" showHeader="false" sidebar="false" lightningStylesheets="true">
+    
+    <apex:includeLightning />
+    <apex:slds />
+    <style>
+    
+    #Container {
+  margin: auto;
+  width: 50%;
+  
+  padding: 10px;
+}
+
+#Containerbutton {
+  margin: auto;
+  width: 50%;
+  
+  padding: 10px;
+}
+    
+    </style>
+            
+
+            <div id="Container" />
+			<apex:form >
+                <div id="Containerbutton" styleclass="slds-align_absolute-center">
+                        <!--apex:commandButton styleclass="slds-button slds-button_neutral slds-align_absolute-center" style="width:15%;"
+                                            value="Close" action="{!cancel}" immediate="false" /-->
+                    <button class="slds-button slds-button_neutral slds-align_absolute-center" style="width: 125px;" onclick="javascript:window.close();">
+                        Close
+                    </button>
+                </div>
+            </apex:form>
+
+            <script>
+                $Lightning.use("c:ArrivalInstructionsOnBookingApplication", function() {
+                $Lightning.createComponent("c:ArrivalInstructionsOnBookings",
+                { 
+                recordId : "{!Xotelia_Booking__c.Id}"
+                },
+                "Container",
+                function(component) {
+                   console.log('Component created, do something cool here');
+                });
+                });
+            </script>
+
+
+</apex:page>

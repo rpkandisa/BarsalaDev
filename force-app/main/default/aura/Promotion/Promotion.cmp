@@ -1,0 +1,377 @@
+<aura:component
+  implements="force:lightningQuickAction,force:hasRecordId,force:hasSObjectName"
+  controller="Promotion"
+>
+  <aura:attribute name="marketingpromotion" type="List" default="[]" />
+  <aura:attribute name="listOptions" type="List" default="[]" />
+  <aura:attribute name="defaultOptions" type="List" default="[]" />
+  <aura:attribute name="requiredOptions" type="List" default="[]" />
+  <aura:attribute name="selectedArray" type="List" default="[]" />
+
+  <aura:attribute type="string" name="context" />
+  <aura:attribute type="string" name="pagetype" default="applypromo" />
+
+  <aura:attribute name="wrpcls" type="Object" />
+  <aura:attribute name="prevwrpcls" type="Object" />
+  <aura:attribute name="wrpvalidate" type="Object" />
+
+  <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+  <aura:handler
+    name="change"
+    value="{!v.wrpcls}"
+    action="{!c.onwrpclschange}"
+  />
+
+  <div class="c-container slds-p-horizontal_small">
+    <div aura:id="errormsg"></div>
+
+    <div class="slds-form slds-form_stacked">
+      <aura:if isTrue="{!v.pagetype=='wizard'}">
+        <div class="slds-form-element">
+          <label class="slds-form-element__label" for="input-id-02"
+            ><span>What are you making a promotion for?</span
+            ><abbr class="slds-required" title="required">*</abbr></label
+          >
+          <div class="slds-form-element__control">
+            <lightning:select
+              name="select1"
+              label=""
+              value="{!v.wrpcls.promotionfor}"
+              disabled="{!v.wrpvalidate.ispromotionfor}"
+            >
+              <option value="">--None--</option>
+              <option value="Marketing Campaign">Marketing Campaign</option>
+              <option value="Specific Guest">Specific Guest</option>
+            </lightning:select>
+          </div>
+        </div>
+      </aura:if>
+
+      <aura:if
+        isTrue="{!or(v.wrpcls.promotionfor == 'Specific Guest',!empty(v.wrpcls.recordid))}"
+      >
+        <div class="slds-form-element">
+          <label class="slds-form-element__label" for="input-id-01"
+            >Guest Name<abbr class="slds-required" title="required"
+              >*</abbr
+            ></label
+          >
+          <aura:if isTrue="{!v.pagetype == 'applypromo'}">
+            <div class="slds-form-element__control">
+              {!v.wrpcls.personname}
+            </div>
+            <aura:set attribute="else">
+              <div class="slds-form-element__control">
+                <c:Lookup
+                  fieldLabel=""
+                  objectAPIName="Account"
+                  subHeadingFieldsAPI="Phone"
+                  placeholder="Search Guest Name"
+                  iconCategoryNameSymbol="standard:user"
+                  chosenRecordId="{!v.wrpcls.recordid}"
+                  isRequired="true"
+                  chosenRecordLabel="{!v.wrpcls.personname}"
+                />
+              </div>
+            </aura:set>
+          </aura:if>
+        </div>
+      </aura:if>
+
+      <aura:if isTrue="{!v.wrpcls.promotionfor == 'Marketing Campaign'}">
+        <div class="slds-form-element">
+          <label class="slds-form-element__label" for="input-id-02"
+            >What is the name of the campaign?</label
+          >
+          <div class="slds-form-element__control">
+            <lightning:input
+              name="nameofcampaign"
+              variant="label-hidden"
+              value="{!v.wrpcls.nameofcampaign}"
+              maxlength="80"
+            />
+          </div>
+        </div>
+      </aura:if>
+
+      <aura:if
+        isTrue="{!and(v.wrpcls.promotionfor == 'Marketing Campaign',!empty(v.wrpcls.nameofcampaign))}"
+      >
+        <div class="slds-form-element">
+          <label class="slds-form-element__label" for="input-id-02"
+            >Please specify a promo code to allow guests to redeem</label
+          >
+          <div class="slds-form-element__control" onkeypress="{!c.keyCheck}">
+            <lightning:input
+              name="promocode"
+              variant="label-hidden"
+              value="{!v.wrpcls.promocode}"
+              maxlength="20"
+              onchange="{!c.promocodechange}"
+            />
+          </div>
+        </div>
+      </aura:if>
+
+      <aura:if
+        isTrue="{!and(or(!empty(v.wrpcls.recordid),!empty(v.wrpcls.promocode)), or(!empty(v.wrpcls.recordid),v.wrpcls.promotionfor == 'Specific Guest'))}"
+      >
+        <div class="slds-form-element">
+          <label class="slds-form-element__label" for="input-id-02"
+            >What promotion are you looking to apply?</label
+          >
+          <div class="slds-form-element__control">
+            <lightning:select
+              name="select"
+              label=""
+              value="{!v.wrpcls.promotionapply}"
+              disabled="{!and(!empty(v.wrpcls.promotionapply))}"
+            >
+              <aura:iteration items="{!v.marketingpromotion}" var="m">
+                <option text="{!m.label}" value="{!m.value}"></option>
+              </aura:iteration>
+            </lightning:select>
+          </div>
+        </div>
+      </aura:if>
+
+      <aura:if isTrue="{!v.wrpcls.promotionapply=='custom'}">
+        <div class="slds-form-element">
+          <label class="slds-form-element__label" for="input-id-02"
+            >What can the discount be applied to?</label
+          >
+          <div class="slds-form-element__control">
+            <lightning:dualListbox
+              aura:id="selectOptions"
+              name="Select Options"
+              label=""
+              size="3"
+              sourceLabel="Available Options"
+              selectedLabel="Selected Options"
+              options="{! v.listOptions }"
+              value="{! v.defaultOptions }"
+              requiredOptions="{! v.requiredOptions }"
+              onchange="{! c.onchangeappliesto }"
+            />
+          </div>
+        </div>
+      </aura:if>
+
+      <aura:if
+        isTrue="{!and(v.wrpcls.promotionapply=='custom',!empty(v.wrpcls.appliesto))}"
+      >
+        <div class="slds-form-element">
+          <label class="slds-form-element__label" for="input-id-02"
+            >What type of discount are you giving?</label
+          >
+          <div class="slds-form-element__control">
+            <c:PicklistSelect
+              objectName="Promotion__c"
+              fieldName="Basis__c"
+              label=""
+              SelValue="{!v.wrpcls.basis}"
+              isdisabled="{!and(!empty(v.wrpcls.basis))}"
+            />
+          </div>
+        </div>
+      </aura:if>
+
+      <aura:if isTrue="{!v.wrpvalidate.isbasis}">
+        <aura:if isTrue="{!v.wrpcls.basis=='flat'}">
+          <div class="slds-form-element">
+            <label class="slds-form-element__label" for="input-id-02"
+              >How much of flat dollar amount discount are you looking to
+              give?</label
+            >
+            <div class="slds-form-element__control">
+              <lightning:input
+                type="number"
+                formatter="currency"
+                step="0.01"
+                name="discountamountoverride"
+                variant="label-hidden"
+                value="{!v.wrpcls.discountamountoverride}"
+                aura:id="txtdiscamtoverid"
+                onfocus="{!c.onfocusbasisamt}"
+              />
+            </div>
+          </div>
+        </aura:if>
+
+        <aura:if isTrue="{!v.wrpcls.basis=='percentage'}">
+          <div class="slds-form-element">
+            <label class="slds-form-element__label" for="input-id-02"
+              >What percentage discount are you giving?</label
+            >
+            <div class="slds-form-element__control">
+              <lightning:input
+                type="number"
+                formatter="percent-fixed"
+                step="0.01"
+                name="discountamountoverride"
+                variant="label-hidden"
+                value="{!v.wrpcls.discountamountoverride}"
+                aura:id="txtdiscamtoverid"
+                onfocus="{!c.onfocusbasisamt}"
+              />
+            </div>
+          </div>
+        </aura:if>
+
+        <aura:if isTrue="{!v.wrpcls.basis=='credit'}">
+          <div class="slds-form-element">
+            <label class="slds-form-element__label" for="input-id-02"
+              >What amount of discount are you giving?</label
+            >
+            <div class="slds-form-element__control">
+              <lightning:input
+                type="number"
+                formatter="currency"
+                step="0.01"
+                name="discountamountoverride"
+                variant="label-hidden"
+                value="{!v.wrpcls.discountamountoverride}"
+                aura:id="txtdiscamtoverid"
+                onfocus="{!c.onfocusbasisamt}"
+              />
+            </div>
+          </div>
+        </aura:if>
+      </aura:if>
+
+      <aura:if isTrue="{!v.wrpvalidate.isfixedorrecurring}">
+        <div class="slds-form-element">
+          <label class="slds-form-element__label" for="input-id-02"
+            >Is it fixed use or recurring?</label
+          >
+          <div class="slds-form-element__control">
+            <c:PicklistSelect
+              objectName="Promotion__c"
+              fieldName="Usage_Type__c"
+              label=""
+              SelValue="{!v.wrpcls.usagetype}"
+            />
+          </div>
+        </div>
+      </aura:if>
+
+      <aura:if isTrue="{!and(v.wrpvalidate.ishowmanytimeguestredeem)}">
+        <div class="slds-form-element">
+          <label class="slds-form-element__label" for="input-id-02"
+            >How many times can the guest redeem it?</label
+          >
+          <div class="slds-form-element__control">
+            <lightning:input
+              name="timesofredeem"
+              variant="label-hidden"
+              value="{!v.wrpcls.timesofredeem}"
+            />
+          </div>
+        </div>
+      </aura:if>
+
+      <aura:if isTrue="{!v.wrpvalidate.isittimecontraint}">
+        <div class="slds-form-element">
+          <label class="slds-form-element__label" for="input-id-02"
+            >Is it time constrained?</label
+          >
+          <div class="slds-form-element__control">
+            <lightning:select
+              name="timecontrained"
+              value="{!v.wrpcls.timecontrained}"
+              variant="label-hidden"
+            >
+              <option value="">-- None --</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </lightning:select>
+          </div>
+        </div>
+      </aura:if>
+
+      <aura:if isTrue="{!v.wrpvalidate.isprefertype}">
+        <div class="slds-form-element">
+          <label class="slds-form-element__label" for="input-id-02"
+            >Do you want to specify a date range or just a number of days from
+            now?</label
+          >
+          <div class="slds-form-element__control">
+            <lightning:select
+              name="prefertype"
+              value="{!v.wrpcls.prefertype}"
+              variant="label-hidden"
+            >
+              <option value="">-- None --</option>
+              <option value="dayfromnow">Days from now</option>
+              <option value="customdaterange">Custom date range</option>
+            </lightning:select>
+          </div>
+        </div>
+      </aura:if>
+
+      <aura:if isTrue="{!v.wrpvalidate.isdayofnow}">
+        <div class="slds-form-element">
+          <label class="slds-form-element__label" for="input-id-02"
+            >Days to use</label
+          >
+          <div class="slds-form-element__control">
+            <lightning:input
+              name="daystouse"
+              variant="label-hidden"
+              value="{!v.wrpcls.daystouse}"
+            />
+          </div>
+        </div>
+      </aura:if>
+
+      <aura:if isTrue="{!v.wrpvalidate.iscustdate}">
+        <div class="slds-form-element">
+          <lightning:input
+            type="date"
+            aura:id="StartDate"
+            label="Start Date"
+            format="MM/DD/YYYY"
+            placeholder="Select Start Date.."
+            value="{!v.wrpcls.startdate}"
+            required="true"
+          />
+        </div>
+        <div class="slds-form-element">
+          <lightning:input
+            type="date"
+            aura:id="EndDate"
+            label="End Date"
+            format="MM/DD/YYYY"
+            placeholder="Select End Date.."
+            value="{!v.wrpcls.enddate}"
+            required="true"
+          />
+        </div>
+      </aura:if>
+
+      <div class="slds-form-element">
+        <aura:if isTrue="{!v.wrpvalidate.issave}">
+          <lightning:button
+            variant="brand"
+            label="Save"
+            title="Save"
+            onclick="{!c.fnsave}"
+          />
+        </aura:if>
+        <lightning:button
+          variant="neutral"
+          label="Reset"
+          title="Reset"
+          onclick="{!c.resetpage}"
+        />
+
+        <lightning:button
+          variant="neutral"
+          label="Cancel"
+          title="Cancel"
+          onclick="{!c.goBack}"
+        />
+      </div>
+    </div>
+  </div>
+</aura:component>

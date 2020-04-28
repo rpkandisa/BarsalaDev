@@ -1,0 +1,17 @@
+.THIS .slds-modal__container{
+	/*width: 80% !important;
+	max-width: 80% !important;*/
+}
+
+.THIS .owl-prev span, .THIS .owl-next span{
+	font-size: 70px;
+}
+
+.THIS .owl-nav{
+    text-align: center !important;
+}
+
+.THIS img{
+	height: 263px;
+    width: 350px;
+}

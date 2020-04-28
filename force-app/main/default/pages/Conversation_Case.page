@@ -1,0 +1,26 @@
+<apex:page showHeader="false" standardController="Case">
+	
+	<apex:includeLightning rendered="true"/>
+	<div id="lightning" />
+
+	<script>
+		var recordId = "{!$CurrentPage.parameters.id}";
+		$Lightning.use(
+			"smagicinteract:ConversationsApp", 
+			function() {
+				$Lightning.createComponent(
+					"smagicinteract:conversations",
+					{
+						 recordId : recordId,
+						 sObjectName : "Case",
+						 phoneFieldCSV : "",
+						 embedContext : "detail"
+					},
+					"lightning",
+					function(cmp) {
+					}
+				);
+			}
+		);
+	</script>
+</apex:page>

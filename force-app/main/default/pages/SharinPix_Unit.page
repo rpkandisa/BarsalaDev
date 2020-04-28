@@ -1,0 +1,4 @@
+<apex:page standardController="Unit__c" rendered="{! $User.UIThemeDisplayed != 'Theme4t'}"> 
+    <apex:canvasApp developerName="Albums" height="500px" parameters="{abilities:{'{!CASESAFEID($CurrentPage.Parameters.Id)}':{Access:{paste:true,image_copy:true,image_download:true,image_rotate:true,image_crop:true,image_delete:true,image_upload:true,image_list:true,see:true}}}}" width="100%"/> 
+    <sharinpix:ImageSync recordId="{! CASESAFEID ($CurrentPage.Parameters.Id) }"/>
+</apex:page>

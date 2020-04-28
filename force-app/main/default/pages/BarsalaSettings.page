@@ -1,0 +1,57 @@
+<apex:page controller="BarsalaSettings" showHeader="true" sidebar="true" lightningStylesheets="true">
+    
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <apex:sectionHeader title="Service Cloud Settings" />
+    <apex:form >
+        <!-- <apex:messages /> -->
+        <apex:pageBlock >
+            <apex:pageMessages id="showmsg"></apex:pageMessages>
+            <apex:pageBlockSection >
+                <apex:inputField value="{! obj.Do_you_want_to_stop_to_run_Case_trigger__c }"/>     
+                <apex:inputField value="{! obj.Email_Alert_Off_On_Case__c }"/>     
+                <apex:inputField id="idRR" value="{! obj.Enable_Round_Robin_Trigger__c }"/>        
+                <apex:inputField id="idEEL" value="{! obj.Enable_Escalation_Level__c }"/>  
+                <apex:inputField value="{! obj.Support_Email_for_Close_Case__c }"/> 
+            </apex:pageBlockSection>
+
+            <apex:pageBlockSection title="Case Escalation Time Settings"  >    
+                <apex:inputField value="{! obj.Case_Priority_High_Hrs__c }"/>        
+                <apex:inputField value="{! obj.Case_Priority_Low_Hrs__c }"/>        
+                <apex:inputField value="{! obj.Case_Priority_Normal_Hrs__c }"/>        
+                <apex:inputField value="{! obj.Case_Priority_Urgent_Hrs__c }"/>        
+            </apex:pageBlockSection>
+
+            <apex:pageBlockButtons >
+                <apex:commandButton action="{! save }" value="Save" />        
+            </apex:pageBlockButtons>
+        </apex:pageBlock>
+
+        <script>
+            $(document).ready(function(){
+                fnchk();
+            });
+            
+            function fnchk(){
+                var ideel = $('input[id$=idEEL]').attr('id');
+                var chklen = $('input[id$=idRR]:checked').length;
+                if(chklen == 0 && $('input[id$=idEEL]:checked').length == 1 && confirm('This will also disable Case Escalation!')){
+                    
+                    document.getElementById(ideel).checked = false;
+                    document.getElementById(ideel).disabled = true;
+                }
+
+                if(chklen == 0){
+                    document.getElementById(ideel).disabled = true;
+                }else{                    
+                    document.getElementById(ideel).disabled = false;
+                }
+            };
+        
+            $(document).on('change','input[id$=idRR]',function(){
+                fnchk();
+            });
+
+            
+        </script>
+    </apex:form>
+</apex:page>

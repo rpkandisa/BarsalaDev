@@ -1,0 +1,673 @@
+<apex:page standardController="Xotelia_Booking__c" extensions="clearGuestController">
+    <html>
+
+    <head>
+        <script src="{!URLFOR($Resource.jquery3)}"></script>
+
+    </head>
+
+    <style type="text/css">
+        .bPageBlock .detailList td.dataCol {
+            width: auto;
+        }
+
+        /* .bPageBlock .detailList td.dataCol:nth-child(2) {
+                width: 70%;
+            } */
+    </style>
+
+    <body>
+        <apex:form id="frm">
+            <apex:pageMessages id="showmsg"></apex:pageMessages>
+
+            <apex:pageBlock title="Clear Guest">
+                <apex:pageBlockButtons >
+
+                    <apex:commandButton value="Save" action="{!Save}" />
+                    <apex:commandButton value="Cancel" action="{!cancel}" immediate="false" />
+
+                </apex:pageBlockButtons>
+                <apex:pageBlockSection >
+                    <apex:pageblockSectionItem >
+                        <apex:outputLabel >Elevated Fraud Risk</apex:outputLabel>
+                        <apex:selectList value="{!ElevatedFraudRiskValue}" size="1" label="Elevated Fraud Risk">
+                            <apex:selectOptions value="{!ElevatedFraudRisk}" />
+                        </apex:selectList>
+                        <!-- <apex:inputField id="inpefr" value="{!booking.Elevated_Fraud_Risk__c}" /> -->
+                    </apex:pageblockSectionItem>
+                    <apex:pageblockSectionItem >
+                    </apex:pageblockSectionItem>
+                    <apex:pageblockSectionItem >
+
+                        <apex:outputLabel rendered="{!booking.Guest_Contact__c = null}">Is the billing contact ({!booking.Billing_Contact__r.Name}) going to stay in this unit?</apex:outputLabel>
+                        <apex:selectRadio value="{!isBilling}" rendered="{!booking.Guest_Contact__c = null}">
+                            <apex:selectOption itemValue="Yes" itemlabel="Yes" />
+                            <apex:selectOption itemValue="No" itemlabel="No" />
+                            <apex:actionSupport event="onchange" rerender="frm" />
+                        </apex:selectRadio>
+                    </apex:pageblockSectionItem>
+                    <apex:pageblockSectionItem rendered="{!booking.Guest_Contact__c = null}">
+                        <apex:inputHidden id="conid" value="{!contactId}"></apex:inputHidden>
+                        <apex:inputHidden id="mergeid" value="{!mergeContactId}"></apex:inputHidden>
+                    </apex:pageblockSectionItem>
+
+                    <apex:pageblockSectionItem >
+
+                        <apex:outputPanel id="idconfield" rendered="{!isBilling='No'}">
+
+                            <table class="detailList">
+                                <tr class="clshide">
+                                    <td colspan="4" class="">
+
+                                        <apex:pageMessage id="pagemessageText" summary="xyz" severity="warning" strength="3"></apex:pageMessage>
+                                    </td>
+
+                                </tr>
+                                <tr>
+                                    <td class="labelCol">
+                                        <b>First Name</b>
+                                    </td>
+                                    <td class="dataCol">
+                                        <apex:inputText value="{!firstName}" id="firstNameId" />
+                                    </td>
+                                    <td class="labelCol">Last Name</td>
+                                    <td class="dataCol">
+                                        <apex:inputText value="{!lastName}" id="lastNameId" />
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td class="labelCol">Email</td>
+                                    <td class="dataCol">
+                                        <apex:inputText id="emailId" value="{!email}" />
+                                    </td>
+                                    <td class="labelCol">Phone</td>
+                                    <td class="dataCol">
+                                        <apex:inputText id="phoneId" value="{!phone}" />
+                                    </td>
+                                </tr>
+                            </table>
+
+                        </apex:outputPanel>
+
+
+                    </apex:pageblockSectionItem>
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+
+            <div id="showMultipleContacts" style="display:none;">
+                <span id="contacts"></span>
+
+            </div>
+
+
+
+        </apex:form>
+
+        <script type="text/javascript">
+            var gb_contacts = [];
+            var finalContactList = [];
+            document.getElementById("showMultipleContacts").style.display = "none";
+            // function getRemoteContact(objtype) {
+            //     var email = '';
+            //     var phone = '';
+            //     if (objtype == 'email') {
+            //         email = $("input[id$=emailId]").val();
+            //     }
+            //     if (objtype == 'phone') {
+            //         phone = $("input[id$=phoneId]").val();
+            //     }
+
+
+            //     document.getElementById("showMultipleContacts").style.display = "none";
+            //     $('#divProcessing').show();
+
+            //     Visualforce.remoting.Manager.invokeAction(
+            //         '{!$RemoteAction.clearGuestController.findExistingContacts}', email, phone,
+            //         function (result, event) {
+            //             if (event.status) {
+            //                 if (result != undefined && result.length > 0) {
+            //                     let obj = result[0];
+            //                     gb_contacts.push(obj);
+
+            //                     $('input[id$=conid]').val(obj.Id);
+            //                     if (obj.FirstName != null) {
+            //                         $("input[id$=firstNameId]").val(obj.FirstName);
+            //                     }
+            //                     if (obj.LastName != null) {
+            //                         $("input[id$=lastNameId]").val(obj.LastName);
+            //                     }
+            //                     if (obj.Email != null) {
+            //                         $("input[id$=emailId]").val(obj.Email);
+            //                     }
+            //                     if (obj.Phone != null) {
+            //                         $("input[id$=phoneId]").val(obj.Phone);
+            //                     }
+            //                 }
+            //             } else if (event.type === 'exception') {
+            //                 alert(event.message + ' ' + event.where);
+            //             } else {
+            //                 alert(event.message);
+            //             }
+            //             $('#divProcessing').hide();
+            //         },
+            //         { buffer: true, escape: true, timeout: 120000 }
+            //     );
+            // }
+
+            $(document).on('change', 'input[id$=emailId]', function () {
+                var email = $("input[id$=emailId]").val();
+                var phone = '';
+                $('#divProcessing').show();
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.clearGuestController.findExistingContacts}', email, phone,
+                    function (result, event) {
+                        if (event.status) {
+                            if (result != undefined && result.length > 0) {
+                                let obj = result[0];
+                                if (gb_contacts.length == 0) {
+                                    $('input[id$=conid]').val(obj.Id);
+                                    if (obj.FirstName != null) {
+                                        $("input[id$=firstNameId]").val(obj.FirstName);
+                                    }
+                                    if (obj.LastName != null) {
+                                        $("input[id$=lastNameId]").val(obj.LastName);
+                                    }
+                                    if (obj.Email != null) {
+                                        $("input[id$=emailId]").val(obj.Email);
+                                    }
+                                    if (obj.Phone != null) {
+                                        $("input[id$=phoneId]").val(obj.Phone);
+                                    }
+                                }
+                                fnAddContact(obj);
+                            }
+                        } else if (event.type === 'exception') {
+                            alert(event.message + ' ' + event.where);
+                        } else {
+                            alert(event.message);
+                        }
+                        $('#divProcessing').hide();
+                    },
+                    { buffer: true, escape: true, timeout: 120000 }
+                );
+            });
+
+            $(document).on('change', 'input[id$=phoneId]', function () {
+                var phone = $("input[id$=phoneId]").val();
+                var email = '';
+                if (phone != undefined && phone.length > 0) phone = phone.replace(/\D+/g, "");
+
+                $('#divProcessing').show();
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.clearGuestController.findExistingContacts}', email, phone,
+                    function (result, event) {
+                        if (event.status) {
+                            if (result != undefined && result.length > 0) {
+                                let obj = result[0];
+
+                                if (gb_contacts.length == 0) {
+                                    $('input[id$=conid]').val(obj.Id);
+                                    if (obj.FirstName != null) {
+                                        $("input[id$=firstNameId]").val(obj.FirstName);
+                                    }
+                                    if (obj.LastName != null) {
+                                        $("input[id$=lastNameId]").val(obj.LastName);
+                                    }
+                                    if (obj.Email != null) {
+                                        $("input[id$=emailId]").val(obj.Email);
+                                    }
+                                    if (obj.Phone != null) {
+                                        $("input[id$=phoneId]").val(obj.Phone);
+                                    }
+                                }
+
+                                fnAddContact(obj);
+                            }
+                        } else if (event.type === 'exception') {
+                            alert(event.message + ' ' + event.where);
+                        } else {
+                            alert(event.message);
+                        }
+                        $('#divProcessing').hide();
+                    },
+                    { buffer: true, escape: true, timeout: 120000 }
+                );
+            });
+
+            function fnAddContact(obj) {
+                debugger;
+                if (gb_contacts.length > 0) {
+
+                    $(".clshide").show();
+                    let gbcontactrecord = gb_contacts[0];
+                    let con1fname = gbcontactrecord.FirstName ? gbcontactrecord.FirstName : '';
+                    let con1lname = gbcontactrecord.LastName ? gbcontactrecord.LastName : '';
+                    var con1 = '<b data-id="' + gbcontactrecord.Id + '" class="clsContact" data-email="' + gbcontactrecord.Email + '" data-phone="' + gbcontactrecord.Phone + '">' + con1fname + ' ' + con1lname + '</b>';
+
+                    let result = obj;
+                    let con2fname = result.FirstName ? result.FirstName : '';
+                    let con2lname = result.LastName ? result.LastName : '';
+                    var con2 = '<b data-id="' + result.Id + '" class="clsContact" data-email="' + result.Email + '" data-phone="' + result.Phone + '" >' + con2fname + ' ' + con2lname + '</b>';
+
+                    $('.messageText').html('Is this reservation for ' + con1 + ' or ' + con2 + "? If so, click on their name above to populate the correct information. <div><b>IMPORTANT:</b> If you don't select one of the accounts above, these two will be merged.</div>");
+
+                    if (gb_contacts.length == 2) {
+                        gb_contacts.pop();
+                    }
+                    gb_contacts.push(obj);
+
+                    $('input[id$=mergeid]').val(obj.Id);
+
+
+                } else if (gb_contacts.length == 0) {
+                    gb_contacts.push(obj);
+                }
+
+            }
+
+
+            $(document).on('click', '.clsContact', function () {
+                let contactid = $(this).attr('data-id');
+                let objMain = {};
+
+                gb_contacts.forEach(obj => {
+                    if (obj.Id == contactid) {
+
+                        objMain = Object.assign({}, obj);
+
+                        $('input[id$=mergeid]').val('');
+
+                        $('input[id$=conid]').val(obj.Id);
+                        if (obj.FirstName != null) {
+                            $("input[id$=firstNameId]").val(obj.FirstName);
+                        }
+                        if (obj.LastName != null) {
+                            $("input[id$=lastNameId]").val(obj.LastName);
+                        }
+                        if (obj.Email != null) {
+                            $("input[id$=emailId]").val(obj.Email);
+                        }
+                        if (obj.Phone != null) {
+                            $("input[id$=phoneId]").val(obj.Phone);
+                        }
+
+                        $(".clshide").hide();
+                    }
+                });
+
+                gb_contacts = [];
+                gb_contacts.push(objMain);
+            });
+
+
+
+        </script>
+    </body>
+
+    <!------------- Start: Processing Div---------------------------------------->
+    <style>
+        .slick-dots li.slick-active button:before,
+        .slick-dots li button:before {
+            color: #227E8A!important;
+        }
+
+        .slick-dots li button:hover,
+        .slick-dots li button:focus {
+            color: #227E8A!important;
+        }
+
+        .clsVirtualTourURL {
+            cursor: pointer;
+        }
+
+        /* .clsimgset { height:200px !important;  } */
+
+        .sldsAvailableUnit {
+            margin: 10px 0;
+        }
+
+
+        .clsfontsize {
+            font-size: 1em;
+        }
+
+        .clsRatingReview {
+            /* font-size: 1.2em; */
+            margin-left: 5px;
+        }
+
+        /*.clsUnitURL { cursor: pointer;}*/
+
+        .clsPrimayColor {
+            color: #227E8A;
+            font-size: 1rem !important;
+        }
+
+        .clsfnt16 {
+            font-size: 1rem !important;
+        }
+
+        .clsfnt14 {
+            font-size: 0.875rem !important;
+        }
+
+        .slds-scope .slds-box {
+            border: 0 !important;
+        }
+
+        .slds-avatar--large {
+            width: 5rem;
+            height: 5rem;
+        }
+
+        .fa-3 {
+            font-size: 1.5em;
+        }
+
+        .image-upload>input {
+            display: none;
+        }
+
+        .ProcessingBackground {
+            background-color: #fff;
+            opacity: 0.60;
+            filter: alpha(opacity=50);
+            width: 100%;
+            height: 100%;
+            position: fixed;
+            z-index: 9998;
+            top: 0;
+            left: 0;
+        }
+
+        .Processing {
+            z-index: 9999;
+            left: 47.5%;
+            top: 50%;
+            text-align: center;
+            position: fixed;
+        }
+
+        .slds-scope .slds-notify-container,
+        .slds-scope .slds-notify_container {
+            z-index: 9000;
+        }
+
+        .slds-grid+.slds-grid {
+            margin-top: 0.5rem;
+        }
+
+        .slds-grid+.slds-grid {
+            margin-top: 0.5rem;
+        }
+
+        .slds-radio_button__label {
+            border: 1px solid #ccc;
+            border-radius: 0.25rem !important;
+            /*color: rgb(0, 112, 210) !important;*/
+            color: #227e8a !important;
+        }
+
+        .radioLabel {
+            padding: 0px !important;
+        }
+
+        .uiBlock .bBody {
+            white-space: pre-wrap;
+        }
+
+        /*.slds-accordion__summary-heading {
+            font-weight: bold !important;
+        }*/
+
+        .slds-accordion__section {
+            background-color: #FAFAFA !important;
+            margin-bottom: 5px;
+            border-radius: 0.25rem!important;
+        }
+
+        /*body {
+            overflow:unset !important;
+        }*/
+
+        .slds-radio_button [type=radio]:checked+.slds-radio_button__label {
+            /*background-color: rgb(118, 158, 218) !important;*/
+            /*background-color:rgb(98, 135, 191) !important;*/
+            /*background-color: rgba(98, 191, 109, 0.92) !important;*/
+            background-color: #227E8A !important;
+            color: rgb(255, 255, 255) !important;
+        }
+
+        .slds-radio_button [type=radio]+.slds-radio_button__label {
+            font-family: 'Open Sans', sans-serif !important;
+        }
+
+        .slds-radio_button [type=radio]:not(:checked)+.slds-radio_button__label:hover {
+            background-color: rgb(244, 246, 249) !important;
+        }
+
+        .slds-page-header__title,
+        .slds-card__header,
+        #pcunit {
+            color: #227E8A;
+            font-family: Lato Light !important;
+            /* font-size: 2rem !important; */
+            /* font-size: 1.5vw !important; */
+        }
+
+        .slds-page-header {
+            background: #FAFAFA !important;
+        }
+
+        .slds-card__header {
+            padding-left: 1rem !important;
+        }
+
+        .slds-button--brand {
+            background-color: #227E8A !important;
+            text-transform: uppercase !important;
+            font-family: Lato !important;
+        }
+
+        .slds-button--brand:hover {
+            background-color: #1D6C78 !important;
+        }
+
+        .slds-button_neutral {
+            background-color: #EAF5F4 !important;
+            color: #1D6C78 !important;
+            text-transform: uppercase !important;
+            font-family: Lato !important;
+        }
+
+        .slds-button_neutral:disabled,
+        .slds-button_neutral:disabled:hover {
+            background-color: #71AEBB !important;
+            color: #fff !important;
+        }
+
+        .slds-button_neutral:hover {
+            background-color: #FAFAFA !important;
+        }
+
+        #aljs-prevButton,
+        #aljs-nextButton {
+            color: #71AEBB !important;
+        }
+
+        .slds-scope .slds-input-has-icon .slds-input__icon {
+            fill: #71AEBB !important;
+        }
+
+        .slds-scope .slds-datepicker td.slds-is-selected:not(.slds-disabled-text)>.slds-day {
+            background: #227E8A !important;
+        }
+
+        .slds-scope .slds-card {
+            background: #FAFAFA;
+            border: none;
+        }
+
+        .slds-section-title--divider,
+        .slds-text-heading--medium,
+        .detailFont,
+        .slds-align-middle {
+            font-family: 'Open Sans', sans-serif !important;
+        }
+
+        .slds,
+        .slds-scope,
+        .slds-scope th,
+        .slds-scope td {
+            font-family: 'Open Sans', sans-serif !important;
+            color: #4A4A4A !important;
+        }
+
+        .slds-card__body {
+            padding-bottom: 0.5rem;
+        }
+
+        .headingFont {
+            font-family: Lato Light !important;
+        }
+
+        .fancybox-slide {
+            padding-left: 0px;
+            padding-right: 0px;
+        }
+
+        .slick-prev {
+            left: 0;
+            z-index: 1;
+            color: transparent !important;
+        }
+
+        .slick-next {
+            right: 0;
+            color: transparent !important;
+        }
+
+        /*.slick-prev:before {
+            content: '\F053' !important;
+        }
+        .slick-next:before {
+            content: '\F054' !important;
+        }*/
+
+        .slick-prev:before,
+        .slick-next:before {
+            color: #227E8A;
+        }
+
+        .virtualTourcontainer {
+            position: relative;
+        }
+
+        .virtualTourcontainer:hover {
+            /* opacity:0.5; */
+            /* commented to remove opacity 3d tour*/
+        }
+
+        .virtualTourcontainer .virtualTourThumbnail {
+            opacity: .7;
+        }
+
+        .virtualTourcontainer .playOverlay {
+            position: absolute;
+            /*top: 50%;
+            left: 50%;*/
+            /* commented to remove opacity 3d tour*/
+            bottom: 10px;
+            right: 10px;
+            /* transform: translate(-50%, -50%);
+            -ms-transform: translate(-50%, -50%); */
+            /* commented to remove opacity 3d tour*/
+            color: white;
+            font-size: 16px;
+            /*padding: 12px 24px;
+            background-color: #555;*/
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            text-align: center;
+            /* height: 50px; */
+            /* commented to remove opacity 3d tour*/
+            width: 54px;
+        }
+
+        /* .slidermaxwidth { max-width: 354px;  }  */
+
+        @media screen and (max-width: 1024px) {
+            /* .clsimgset {
+               height:200px!important;
+           } */
+        }
+
+        @media screen and (max-width: 768px) {
+            /* .clsimgset {
+               height:170px!important;
+           }       */
+            .playOverlay {
+                bottom: 7px !important;
+                right: 7px !important;
+                width: 44px !important;
+            }
+
+            /* .slds-page-header__title, .slds-card__header, #pcunit {
+                font-size: 1.83314rem !important;
+            }
+            .clsPrimayColor {font-size: 1rem !important;} */
+        }
+
+
+        @media screen and (max-width: 480px) {
+            /* .clsimgset {
+               height:170px!important;
+           } */
+            .playOverlay {
+                bottom: 5px!important;
+                right: 5px!important;
+                width: 50px!important;
+            }
+
+        }
+
+
+
+        .slick-dots li {
+            margin: 0 -5px!important;
+        }
+
+        .nounderline {
+            text-decoration: none!important;
+        }
+
+        button.slds-button.slds-button--brand.btnNextToPayment.clsdisabledbtn {
+            background: #f0f0f0!important;
+            color: #000;
+        }
+
+        .clsContact {
+            cursor: pointer;
+        }
+
+        .clshide {
+            display: none;
+        }
+    </style>
+    <div id="divProcessing" style="display:none;">
+        <div class="ProcessingBackground"></div>
+        <div class="Processing">
+            <image alt="Processing" width="64" height="64" src="{!URLFOR($Resource.lightning, '/assets/images/spinners/slds_spinner_brand.gif')}"
+            />
+        </div>
+        <apex:actionStatus id="Processing" onstart="document.getElementById('divProcessing').style.display = '';" onstop="document.getElementById('divProcessing').style.display = 'none';">
+        </apex:actionStatus>
+    </div>
+    <!------------- End: Processing Div---------------------------------------->
+
+    </html>
+
+
+</apex:page>

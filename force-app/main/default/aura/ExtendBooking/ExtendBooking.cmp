@@ -1,0 +1,267 @@
+<aura:component implements="force:lightningQuickAction,force:hasRecordId,force:hasSObjectName" controller="UnitBookingController">
+    <ltng:require styles="{!$Resource.fonts+'/fonts.css'}"/>
+	
+    <aura:attribute name="userInfo" type="Object"/>  
+    
+    <aura:attribute type="boolean" default="false" name="bookingAvailable" />
+    <aura:attribute type="boolean" default="true" name="isPortalUser" />
+    <aura:attribute type="UnitBookingController.bookingExtensionWrapper" default="" name="unitPrice" />
+    <aura:attribute type="string" name="context" />
+    
+    <aura:attribute type="string" default="" name="toDate" />
+    <aura:attribute type="UnitBookingController.initBookingWrap" default="Theme4d" name="bookInit" />
+    <aura:attribute type="boolean" default="false" name="updateCardDetails" />
+    <aura:attribute type="boolean" default="false" name="proceedForPayment" />
+    <aura:attribute type="Integer" name="discount" />
+    <aura:attribute type="Decimal" name="unitDiscountedPrice" />
+     <aura:attribute type="string" name="CurrentUserEmail" />
+
+    <aura:attribute name="expMonthOptions" type="List"/>
+    <aura:attribute name="expYearOptions" type="List" />
+    <aura:attribute name="ccModel" type="UnitBookingController.CreditCardModel" />
+    <aura:attribute name="existingCCModel" type="UnitBookingController.CreditCardModel" />
+    <aura:attribute name="selectedPymtMethod" type="String" default=""/>
+
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+
+    <ui:scrollerWrapper class="outerScroller noOverflow">
+    <!-- Scrollable content here -->
+    <ui:scrollerWrapper class="{!if(v.context=='Theme4t', 'innerScroller noOverflow', 'noOverflow')}">
+
+          <div aura:id="errormsg"></div>
+
+        
+        <div class="c-container">
+            <lightning:layout horizontalAlign="" title="Extend Booking" multipleRows="true" >
+                <aura:if isTrue="{!!v.bookInit.isError}">
+                    <lightning:layoutItem flexibility="auto" padding="around-small" size="12" largeDeviceSize="6" smallDeviceSize="12" mediumDeviceSize="6">
+                        <lightning:input class="inputStyle" type="date" aura:id="fromDT" label="From Date" name="From Date" disabled="true" value="{!v.bookInit.fromDate}"/>
+                    </lightning:layoutItem>
+                    <lightning:layoutItem flexibility="auto" padding="around-small" size="12" largeDeviceSize="6" smallDeviceSize="12" mediumDeviceSize="6">
+                        <lightning:input class="inputStyle" disabled="{!v.proceedForPayment}" type="date" aura:id="toDT" label="To Date" name="To Date" required="true" value="{!v.bookInit.toDate}" onchange="{!c.dateValidtion}"/>
+                    </lightning:layoutItem>
+
+                    <aura:if isTrue="{!!v.proceedForPayment}">
+                        <lightning:layoutItem flexibility="auto,no-shrink" padding="around-small" size="12" largeDeviceSize="6" smallDeviceSize="12" mediumDeviceSize="6">
+                            <lightning:button class="buttonBrand" variant="brand" aura:id="searchbtn" disabled="true" iconName="utility:search" label="Check Availablity" iconPosition="left" onclick="{!c.search}"/>
+                        </lightning:layoutItem>
+                    </aura:if>
+
+                    <aura:if isTrue="{!v.context == 'classic'}">
+                        <lightning:layoutItem flexibility="auto" padding="around-small" size="12" largeDeviceSize="6" smallDeviceSize="12" mediumDeviceSize="6">
+                            <lightning:button variant="neutral" label="Cancel" class="{!!v.proceedForPayment ? 'cancel buttonNeutral' : 'buttonNeutral'}" onclick="{!c.goBack}"/>
+                        </lightning:layoutItem>
+                    </aura:if>
+                </aura:if>
+                <aura:if isTrue="{!v.bookInit.isError}">
+                    <lightning:layoutItem flexibility="auto" padding="around-small" size="12" largeDeviceSize="6" smallDeviceSize="12" mediumDeviceSize="6">
+                        <lightning:button class="buttonNeutral" variant="neutral" label="Cancel" onclick="{!c.goBack}"/>
+                    </lightning:layoutItem>
+                </aura:if>
+                
+                
+            </lightning:layout>
+        </div>
+
+        <span>
+            <aura:if isTrue="{!!v.proceedForPayment}">
+                <aura:if isTrue="{!v.bookingAvailable}">
+                    <lightning:card title="Booking Summary" class="slds-m-around_small headingStyle">
+                        <p class="slds-p-horizontal_small">
+                            <dl class="slds-list--horizontal slds-wrap">
+                                <dt class="slds-item--label slds-text-color--weak slds-truncate detailStyle" style="font-weight: normal;" >Existing Booking Total:</dt>
+                                <dd class="slds-item--detail slds-truncate slds-text-align--right detailStyle" id="exibook">
+                                    <ui:outputCurrency value="{!v.unitPrice.ExistingBookTotal}" />
+                                </dd>
+                                <dt class="slds-item--label slds-text-color--weak slds-truncate detailStyle" style="font-weight: normal;" >Unit Total:</dt>
+                                <dd class="slds-item--detail slds-truncate slds-text-align--right detailStyle" id="pcsubtotal">
+                                    <ui:outputCurrency value="{!v.unitPrice.SubTotal}" />
+                                </dd>
+
+                                <aura:if isTrue="{!not(v.isPortalUser)}">
+                                    <dt class="slds-item--label slds-text-color--weak slds-truncate detailStyle" style="font-weight: normal;">Discount (%):</dt>
+                                    <dd class="slds-item--detail slds-truncate slds-text-align--right detailStyle" >
+                                        <lightning:input aura:id="Discount" value="{!v.discount}" class="nolabel readonly alignRight" type="number" name="number" min="0" max="100" step="0.01" maxlength="4" onchange="{!c.calDisAmt}" />
+                                    </dd>
+
+
+                                    <dt class="slds-item--label slds-text-color--weak slds-truncate detailStyle" style="font-weight: normal;">SubTotal:</dt>
+                                    <dd class="slds-item--detail slds-truncate slds-text-align--right detailStyle" id="pcTotalPriceRef">
+                                        <ui:outputCurrency value="{!v.unitDiscountedPrice}" />
+                                    </dd>
+                                </aura:if>
+
+                                <dt class="slds-item--label slds-text-color--weak slds-truncate detailStyle" style="font-weight: normal;" >Cleaning Fee:</dt>
+                                <dd class="slds-item--detail slds-truncate slds-text-align--right detailStyle" id="cleanFee">
+                                    <ui:outputCurrency value="{!v.unitPrice.CleaningFee}" />
+                                </dd>
+                                <dt class="slds-item--label slds-text-color--weak slds-truncate detailStyle" style="font-weight: normal;" >Tax:</dt>
+                                <dd class="slds-item--detail slds-truncate slds-text-align--right detailStyle" id="tax">
+                                    <ui:outputCurrency value="{!v.unitPrice.tax}" />
+                                </dd>
+
+                                <aura:if isTrue="{!not(v.isPortalUser)}">
+                                    <!--<dt class="slds-itemdash-label slds-text-colordash-weak slds-truncate" style="font-weight: normal;">SubTotal Inc Tax:</dt>
+                                    <dd class="slds-itemdash-detail slds-truncate slds-text-aligndash-right" style="margin-bottom:3px;" id="TaxedAmount">
+                                        <!dash-<lightning:input class="nolabel" type="number" name="number" min="0" step="0.01" value="{!v.unitPrice.disAmt}" formatter="currency" onchange="{!c.calDis}"/>dash->
+                                        <ui:outputCurrency value="{!v.unitPrice.disAmt}" />
+                                    </dd>-->
+
+                                    <dt class="slds-item--label slds-text-color--weak slds-truncate detailStyle" style="font-weight: normal;">Final Price:</dt>
+                                    <dd class="slds-item--detail slds-truncate slds-text-align--right detailStyle" id="pcTotalPriceRef">
+                                        <!--<ui:outputCurrency value="{!v.unitPrice.grandTotal}" />-->
+                                        <lightning:input class="nolabel readonly alignRight" type="number" name="number" min="0" step="0.01" value="{!v.unitPrice.grandTotal}" formatter="currency" onchange="{!c.calDis}"/>
+                                    </dd>
+                                    <aura:set attribute="else">
+                                        <dt class="slds-item--label slds-text-color--weak slds-truncate detailStyle" style="font-weight: normal;">Final Price:</dt>
+                                        <dd class="slds-item--detail slds-truncate slds-text-align--right detailStyle" style="margin-bottom:3px;" id="pcTotalPriceRef">
+                                            <ui:outputCurrency value="{!v.unitPrice.grandTotal}" />
+                                        </dd>
+                                    </aura:set>
+                                </aura:if>
+                            </dl>
+                            <br/>
+                        </p>
+                        <br/>
+
+                        <center>
+                            <lightning:button aura:id="proceedBookBtn" class="buttonBrand" variant="brand" label="Proceed to Payment" onclick="{!c.proceedForPayment}"/>
+                        </center>
+                    </lightning:card>
+                </aura:if>
+            </aura:if>
+        </span>
+
+        <aura:if isTrue="{!v.proceedForPayment}">
+            <lightning:card title="Booking Summary" class="slds-m-around_small headingStyle">
+                <p class="slds-p-horizontal_small">
+                    <dl class="slds-list--horizontal slds-wrap">
+                        <dt class="slds-item--label slds-text-color--weak slds-truncate detailStyle" style="font-weight: normal;" >Existing Booking Total:</dt>
+                        <dd class="slds-item--detail slds-truncate slds-text-align--right detailStyle" id="exibook">
+                            <ui:outputCurrency value="{!v.unitPrice.ExistingBookTotal}" />
+                        </dd>
+                        <dt class="slds-item--label slds-text-color--weak slds-truncate detailStyle" style="font-weight: normal;" >Unit Total:</dt>
+                        <dd class="slds-item--detail slds-truncate slds-text-align--right detailStyle" id="pcsubtotal">
+                            <ui:outputCurrency value="{!v.unitPrice.SubTotal}" />
+                        </dd>
+
+                        <aura:if isTrue="{!not(v.isPortalUser)}">
+                            <dt class="slds-item--label slds-text-color--weak slds-truncate detailStyle" style="font-weight: normal;">Discount (%):</dt>
+                            <dd class="slds-item--detail slds-truncate slds-text-align--right detailStyle" >
+                                <lightning:formattedNumber value="{!(v.discount ? v.discount/100:0)}" minimumIntegerDigits="1" minimumFractionDigits="2" style="percent" />
+                            </dd>
+                            
+                            <dt class="slds-item--label slds-text-color--weak slds-truncate detailStyle" style="font-weight: normal;">SubTotal:</dt>
+                            <dd class="slds-item--detail slds-truncate slds-text-align--right detailStyle" style="margin-bottom:3px;" id="TaxedAmount">
+                                <!--<lightning:input class="nolabel" type="number" name="number" min="0" step="0.01" value="{!v.unitPrice.disAmt}" formatter="currency" onchange="{!c.calDis}"/>-->
+                                <ui:outputCurrency value="{!v.unitDiscountedPrice}" />
+                            </dd>
+                        </aura:if>
+                        <dt class="slds-item--label slds-text-color--weak slds-truncate detailStyle" style="font-weight: normal;" >Cleaning Fee:</dt>
+                        <dd class="slds-item--detail slds-truncate slds-text-align--right detailStyle" id="cleanFee">
+                            <ui:outputCurrency value="{!v.unitPrice.CleaningFee}" />
+                        </dd>
+                        <dt class="slds-item--label slds-text-color--weak slds-truncate detailStyle" style="font-weight: normal;" >Tax:</dt>
+                        <dd class="slds-item--detail slds-truncate slds-text-align--right detailStyle" id="tax">
+                            <ui:outputCurrency value="{!v.unitPrice.tax}" />
+                        </dd>
+                        
+                        
+                        <dt class="slds-item--label slds-text-color--weak slds-truncate detailStyle" style="font-weight: normal;">Final Price:</dt>
+                        <dd class="slds-item--detail slds-truncate slds-text-align--right detailStyle" id="pcTotalPriceRef">
+                            <ui:outputCurrency value="{!v.unitPrice.grandTotal}" />
+                        </dd>
+                    </dl>
+                    <br/>
+                    
+                <aura:if isTrue="{!and(not(empty(v.unitPrice.grandTotal)), greaterthan(v.unitPrice.grandTotal, 0))}">
+                    <aura:if isTrue="{!v.unitPrice.ccModelList.length>0}">
+                        <h3 class="slds-section-title--divider headingStyle">Saved Card(s)</h3>
+                        <div class="slds-p-top_small">
+                            <aura:iteration items="{!v.unitPrice.ccModelList}" var="ccModel">
+                                <div class="slds-grid container">
+                                    <div class="slds-col slds-size_12-of-12 sldsOverrightLineHeight">
+                                        <span class="slds-radio_button sldsfullwidth">
+                                            <input checked="{!ccModel.cardId == v.selectedPymtMethod}" type="radio" id="{!ccModel.cardId}" name="radioSavedCards" data-pymt-method-id="{!ccModel.cardId}" aura:text="{!ccModel.cardId}" class="slds-radio" onchange="{!c.selectPaymentMethod}" />
+                                            <label class="slds-radio_button__label sldsfullwidth slds-size_12-of-12" for="{!ccModel.cardId}">
+                                              <span class="slds-radio_faux radioLabel">
+
+                                                <div class="slds-grid slds-wrap">
+                                                    <div class="slds-col slds-size_2-of-5 slds-x-small-size_1-of-1 slds-small-size_2-of-5 slds-m-vertical_x-small">
+                                                        <span>{!ccModel.cardName}</span>
+                                                    </div>
+                                                    <div class="slds-col slds-size_1-of-5 slds-x-small-size_1-of-1 slds-small-size_1-of-5 slds-m-vertical_x-small">
+                                                        <span>XX{!ccModel.cardNumber}</span>
+                                                    </div>
+                                                    <div class="slds-col slds-size_1-of-5 slds-x-small-size_1-of-1 slds-small-size_1-of-5 slds-m-vertical_x-small">
+                                                        <span>{!ccModel.cardType}</span>
+                                                    </div>
+                                                   
+                                                    <div class="slds-col slds-size_1-of-5 slds-x-small-size_1-of-1 slds-small-size_1-of-5 slds-m-vertical_x-small">
+                                                        <span>{!ccModel.expMonth+'/'+ccModel.expYear}</span>
+                                                    </div>
+                                                    
+                                                    
+                                                </div>
+
+                                                </span>
+                                            </label>
+                                        </span>
+                                      </div>
+                                </div>
+                            </aura:iteration>
+
+                        </div><br/>
+                    </aura:if>
+
+                    <lightning:input type="checkbox" class="inputStyle" label="Add/Update Credit Card" name="updateCardDetails" onchange="{!c.addPaymentMethod}" checked="{!v.updateCardDetails}" disabled="{!v.unitPrice.requireCreditCard}" />
+                    
+                    <aura:if isTrue="{!v.updateCardDetails}">
+                        <div class="slds-grid slds-wrap">
+                            <lightning:input maxlength="16" minlength="12" pattern="[0-9]*" label="Card Number" class="slds-size_1-of-1 slds-p-vertical_xxx-small inputStyle"  aura:id="cardNumber" required="true" 
+                                messageWhenPatternMismatch="Enter a valid card number"
+                                messageWhenBadInput="Enter a valid card number"
+                                messageWhenValueMissing="Value is required"
+                                value="{!v.ccModel.cardNumber}"
+                            />
+
+                            <lightning:select value="{!v.ccModel.expMonth}" class="slds-size_1-of-2 slds-p-horizontal_xxx-small slds-p-vertical_xxx-small inputStyle" aura:id="expMonth" label="Exp. Month" required="true" messageWhenValueMissing="Value is required" >
+                                <aura:iteration items="{!v.expMonthOptions}" var="item">
+                                    <option text="{!item.label}" value="{!item.value}" selected="{!item.selected}"/>
+                                </aura:iteration>
+                            </lightning:select>
+
+                            <lightning:select value="{!v.ccModel.expYear}" class="slds-size_1-of-2 slds-p-horizontal_xxx-small slds-p-vertical_xxx-small inputStyle" aura:id="expYear" label="Exp. Year" required="true" messageWhenValueMissing="Value is required" >
+                                <aura:iteration items="{!v.expYearOptions}" var="item">
+                                    <option text="{!item.label}" value="{!item.value}" selected="{!item.selected}"/>
+                                </aura:iteration>
+                            </lightning:select>
+
+                            <lightning:input value="{!v.ccModel.cardName}" class="slds-size_1-of-1 slds-p-vertical_xxx-small inputStyle" label="Name on Card" aura:id="cardName" required="true" messageWhenValueMissing="Value is required"/>
+                            
+                            <lightning:input value="{!v.ccModel.cvv}" class="slds-size_1-of-2 slds-p-horizontal_xxx-small slds-p-vertical_xxx-small inputStyle" label="CVV" aura:id="cvv" required="true" maxlength="4" minlength="3" pattern="[0-9]*" 
+                                messageWhenPatternMismatch="Enter a valid CVV number"
+                                messageWhenBadInput="Enter a valid CVV number" 
+                                messageWhenValueMissing="Value is required"
+                            />
+                            <!--
+                            <lightning:input value="{!v.ccModel.cardType}" class="slds-size_1-of-2 slds-p-horizontal_xxx-small slds-p-vertical_xxx-small" label="Card Type" aura:id="cardType" required="true" messageWhenValueMissing="Value is required"/>
+                            -->
+                            <lightning:input value="{!v.ccModel.zipCode}" class="slds-size_1-of-2 slds-p-horizontal_xxx-small slds-p-vertical_xxx-small inputStyle" label="Zip Code" aura:id="zipCode" required="true" messageWhenValueMissing="Value is required"/>
+                        </div>
+                    </aura:if>            
+                </aura:if>
+
+                </p>
+                <br/>
+                <center>
+                    <lightning:button class="buttonNeutral" aura:id="backToSearchBtn" variant="neutral" label="Back to Search" onclick="{!c.backToSearch}"/>
+                    <lightning:button class="buttonBrand" aura:id="bookBtn" variant="brand" label="Book" disabled="true" onclick="{!c.bookUnit}"/>
+                </center>
+            </lightning:card>
+        </aura:if>
+    </ui:scrollerWrapper>
+    <!-- Scrollable content here -->
+    </ui:scrollerWrapper>
+    <lightning:spinner variant="brand" size="large" aura:id="mySpinner"  class="slds-hide"/> 
+</aura:component>

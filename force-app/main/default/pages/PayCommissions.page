@@ -1,0 +1,22 @@
+<apex:page standardController="Account" showHeader="true" sidebar="false" title="Pay Commissions">
+    <apex:includeLightning />
+    <apex:slds />
+
+
+    <div id="lightning" />
+
+    <script>
+        $Lightning.use("c:LTNG_AppForVF", function () {
+            $Lightning.createComponent("c:PayCommissions",
+                {
+                    recordId: '{!$CurrentPage.parameters.id}',
+                    context: 'classic',
+                    accountName: '{!Account.Name}'
+                }, //------> Here i have passed the selected contact via value change. 
+                "lightning",
+                function (cmp) {
+                    // any further setup goes here
+                });
+        });
+    </script>
+</apex:page>

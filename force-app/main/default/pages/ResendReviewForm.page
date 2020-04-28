@@ -1,0 +1,30 @@
+<apex:page standardController="Xotelia_Booking__c" extensions="ResendReviewFormController" lightningStylesheets="true"  action="{!sendSMS}" >
+    
+    <meta charset="utf-8" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge" />
+    <title>Resend Review Form</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    
+    
+    <style>
+    .btnback { padding: 5px 20px!important;
+    margin: 0 20px!important; }
+    </style>
+
+
+    
+    <apex:form >
+        
+            <apex:pageMessages />
+        
+        <apex:commandButton styleClass="btnback" action="{!cancel}" value="Back" immediate="true"/>
+     </apex:form>   
+        
+   
+
+
+    
+    
+    
+</apex:page>

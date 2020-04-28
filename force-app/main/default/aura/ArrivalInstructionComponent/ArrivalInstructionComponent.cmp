@@ -1,0 +1,60 @@
+<aura:component controller="ArrivalInstructionController" implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickAction" access="global" >
+    
+    <aura:attribute name="recordId" type="String" />
+    <aura:attribute name="InstructionCount" type="Integer" />
+    <aura:attribute name="arrInstuctionsDetails" type="Object" />
+    
+    <!--aura:handler name="init" value="{! this }" action="{! c.init }"/-->
+    <ltng:require styles="{!join(',', 
+                           $Resource.SliderFiles  + '/css/owl.carousel.min.css')}"  
+                  scripts="{!join(',',
+                           $Resource.SliderFiles  + '/js/jquery-3.4.1.min.js',      
+                           $Resource.SliderFiles  + '/js/owl.carousel.min.js')}"  afterScriptsLoaded="{!c.init}"/>
+    
+    <h4 style="font-weight:600;font-size:large;"><b>How to access your unit?</b></h4><br/>
+    
+    <aura:if isTrue="{!v.InstructionCount>0}">
+        <div class="homeBotSlider" >
+            <div id="owlcityslider" data-image-count="{!v.InstructionCount}" class="owl-carousel owl-theme">
+                <aura:iteration items="{!v.arrInstuctionsDetails.sharinPixImagesList}" var="a" indexVar="index">            
+                    <div class="item">
+                        
+                        <img src="{!a.sharinpix__ImageURLFull__c}"/><br/>
+                        <div style="font-size:initial;"> 
+                        {!index+1} / {!v.InstructionCount}<br/>
+                        {!a.Checkin_Instruction_Description__c}
+                        
+                            
+                            <!-- For Unit number and floor number-->
+                            <aura:if isTrue="{!and(a.Checkin_Supply_Unit_Number__c , a.Checkin_Supply_Floor_Number__c)}">
+                                Your unit number is {!v.arrInstuctionsDetails.unitNumber} on floor {!v.arrInstuctionsDetails.floorNumber}.
+                                <aura:set attribute="else">
+                                    <aura:if isTrue="{!a.Checkin_Supply_Unit_Number__c}">
+                                        Your unit number is {!v.arrInstuctionsDetails.unitNumber}.
+                                    </aura:if>
+                                    <aura:if isTrue="{!a.Checkin_Supply_Floor_Number__c}">
+                                        Your floor number is {!v.arrInstuctionsDetails.floorNumber}.
+                                    </aura:if>
+                                </aura:set>
+                            </aura:if>
+                            
+                            
+                            <!-- For Parking spot-->
+                            <aura:if isTrue="{!a.Checkin_Supply_Parking_Spot__c}">    
+                                Your parking info is: {!v.arrInstuctionsDetails.parking}.
+                            </aura:if>   
+                            
+                            
+                           <!-- For city manager-->
+                            <aura:if isTrue="{!a.Checkin_Supply_City_Manager_Phone__c}">    
+                                Your city manager is {!v.arrInstuctionsDetails.cityManagerName} and their number is {!v.arrInstuctionsDetails.cityManagerPhone}.
+                            </aura:if>   
+                            
+                        </div>
+                        
+                    </div>
+                </aura:iteration>
+            </div>
+        </div>
+    </aura:if>
+</aura:component>

@@ -1,0 +1,8 @@
+<!--<apex:page StandardController="Cleaning_Assignment__c"> 
+    <sharinpix:SharinPix height="600px" parameters="{'Id': '{!$CurrentPage.parameters.Id}', 'abilities':{'{!$CurrentPage.parameters.Id}':{'Access': {'image_upload':true,'image_list':true,'see':true,'image_delete':true}}}}"></sharinpix:SharinPix> 
+</apex:page>-->
+
+<apex:page standardController="Cleaning_Assignment__c" rendered="{! $User.UIThemeDisplayed != 'Theme4t'}"> 
+    <apex:canvasApp developerName="Albums" height="500px" parameters="{abilities:{'{!CASESAFEID($CurrentPage.Parameters.Id)}':{Access:{paste:true,image_copy:true,image_download:true,image_rotate:true,image_crop:true,image_delete:true,image_upload:true,image_list:true,see:true}}}}" width="100%"/> 
+    <sharinpix:ImageSync recordId="{! $CurrentPage.Parameters.Id }"/>
+</apex:page>

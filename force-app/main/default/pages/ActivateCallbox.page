@@ -1,0 +1,23 @@
+<apex:page standardController="Building__c" extensions="ActivateCallboxController" action="{!sendtextmessage}">
+
+    <apex:sectionHeader title="Activate Callbox" subtitle="{!Building__c.Name}" />
+
+    <apex:form >
+
+
+
+        <apex:pageBlock title="Activate Callbox">
+            <apex:pageBlockButtons >
+                <apex:commandButton value="Back" action="{!cancel}" immediate="false" />
+            </apex:pageBlockButtons>
+
+            <apex:pageBlockSection columns="1">
+                <apex:pageblockSectionItem >
+                    <apex:pageMessages />
+                </apex:pageblockSectionItem>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+
+    </apex:form>
+
+</apex:page>

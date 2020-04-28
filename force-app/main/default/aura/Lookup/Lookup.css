@@ -1,0 +1,7 @@
+.THIS .clsIsRequiredField {
+  position: absolute;
+  top: 3px;
+}
+.THIS lightning-input.clsIsRequiredFieldData.slds-form-element label {
+  margin-left: 10px;
+}

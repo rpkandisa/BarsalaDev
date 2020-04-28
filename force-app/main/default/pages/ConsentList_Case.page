@@ -1,0 +1,23 @@
+<apex:page showHeader="true" sidebar="false" standardController="Case">
+	
+	<apex:includeLightning rendered="true"/>
+	<div id="lightning" />
+
+	<script>
+		var recordId = "{!$CurrentPage.parameters.id}";
+		$Lightning.use(
+			"smagicinteract:complianceConsentApp", 
+			function() {
+				$Lightning.createComponent(
+					"smagicinteract:complianceConsentList",
+					{
+						 recordId : recordId,
+					},
+					"lightning",
+					function(cmp) {
+					}
+				);
+			}
+		);
+	</script>
+</apex:page>

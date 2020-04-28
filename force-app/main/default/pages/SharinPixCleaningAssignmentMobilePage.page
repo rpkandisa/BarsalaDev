@@ -1,0 +1,52 @@
+<apex:page showHeader="false" standardStylesheets="false" showQuickActionVfHeader="true" standardController="Cleaning_Assignment__c"> 
+    
+    <apex:canvasApp developerName="Albums" height="500px" parameters="{abilities:{'{!CASESAFEID($CurrentPage.Parameters.Id)}':{Access:{paste:true,image_copy:true,image_download:true,image_rotate:true,image_crop:true,image_delete:true,image_upload:true,image_list:true,see:true}}}}" width="100%"/>
+    <sharinpix:ImageSync recordId="{! $CurrentPage.Parameters.Id }"/> 
+        
+    <!--<apex:slds />
+    <style>
+        .cuf-content {
+            padding: 0 0rem !important;
+        }
+        .slds-p-around--medium {
+            padding: 0rem !important;
+        }       
+        .slds-modal__content{
+            overflow-y:hidden !important;
+            height:unset !important;
+            max-height:unset !important;
+        }
+        .slds-modal__footer{
+            background:white !important;
+        }   
+    </style>
+
+    <script type='text/javascript' src='/canvas/sdk/js/publisher.js'></script>
+    <script>
+        function closePopup(){
+            //alert('test');
+            Sfdc.canvas.publisher.publish({ name: "publisher.close", payload:{ refresh: "true" }});
+        }
+    </script> 
+    
+    
+    <!--Modal Header-- 
+    <div class="modal-header slds-modal__header slds-size_1-of-1">
+        <h4 class="title slds-text-heading--medium">Photos</h4>
+    </div>
+    <!--End Modal Header--
+
+    <!--Modal Body--  
+    <div class="slds-modal__content slds-p-around--x-small slds-align_absolute-center slds-size_1-of-1 slds-is-relative modelBody">
+        <apex:canvasApp developerName="Albums" height="500px" parameters="{abilities:{'{!CASESAFEID($CurrentPage.Parameters.Id)}':{Access:{paste:true,image_copy:true,image_download:true,image_rotate:true,image_crop:true,image_delete:true,image_upload:true,image_list:true,see:true}}}}" width="100%"/>
+        <sharinpix:ImageSync recordId="{! $CurrentPage.Parameters.Id }"/> 
+    </div>
+    <!--End of Modal Body--
+
+    <!--Modal Footer--
+    <!-- <div class="modal-footer slds-modal__footer slds-size_1-of-1">
+        <button class="slds-button slds-button_neutral" onclick="closePopup(); return false">Close</button>
+    </div> --
+    <!--End of Modal Footer-->
+    
+</apex:page>

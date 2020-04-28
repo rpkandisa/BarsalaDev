@@ -1,0 +1,16 @@
+<aura:component implements="force:lightningQuickAction,force:hasRecordId" access="global" controller="EmailTemplateController" >
+    <aura:attribute type="string" name="context" default="Theme4t" />
+    <aura:attribute name="htmlString" type="String"/>
+    
+	<ltng:require scripts="{!$Resource.jquery3}" afterScriptsLoaded="{!c.doInitJquery}" />
+    <aura:dependency resource="markup://force:navigateToURL" type="EVENT"/>
+    
+    <!-- This container is used to show information message when checkin/checkout information is not available -->
+    <div aura:id="desktopContainer" id="desktopContainer" />
+    <ui:scrollerWrapper class="outerScroller noOverflow" aura:id="outerScroller">
+         <!-- Scrollable content here -->
+         <ui:scrollerWrapper class="innerScroller noOverflow">
+             <div aura:id="mobileContainer" id="mobileContainer" />
+         </ui:scrollerWrapper>
+    </ui:scrollerWrapper>
+</aura:component>

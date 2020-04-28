@@ -1,0 +1,110 @@
+<apex:page standardController="Building__c" extensions="SendBulkSMSFromBuildingController" standardStylesheets="false">
+    <apex:slds />
+    <script>
+        function cvCheckAllOrNone(allOrNoneCheckbox) {
+
+            // Find parent table
+            var container = allOrNoneCheckbox;
+            while (container.tagName != "TABLE") {
+                container = container.parentNode;
+            }
+
+            // Switch all checkboxes            
+            var inputs = container.getElementsByTagName("input");
+            var checked = allOrNoneCheckbox.checked;
+            for (var i = 0; i < inputs.length; i++) {
+                var input = inputs.item(i);
+                if (input.type == "checkbox") {
+                    if (input != allOrNoneCheckbox) {
+                        input.checked = checked;
+                    }
+                }
+            }
+        }
+
+        function fncheckcontact() {
+            let frm = document.getElementById('scan-form');
+            let inputs = frm.getElementsByTagName("input");
+            let ischecked = false;
+            for (var i = 0; i < inputs.length; i++) {
+                var input = inputs.item(i);
+                if (input.type == "checkbox" && input.checked) {
+                    ischecked = true;
+                }
+            }
+
+            if (!ischecked) {
+                alert('Please select at least one customer from the list below.');
+            }
+
+            return ischecked;
+        }
+    </script>
+
+
+    <apex:sectionHeader title="Building" subtitle="{!Building__c.Name}" />
+
+    <div class="slds-m-vertical_x-small">
+        <i>
+            <strong>Note:</strong>&nbsp;Please select at least one customer from the list below.</i>
+    </div>
+
+    <form id="scan-form" action="/apex/bulksms_contact" method="post" charset="UTF-8" enctype="application/x-www-form-urlencoded">
+        <table class="slds-box slds-table slds-table_cell-buffer slds-table_bordered slds-table_col-bordered">
+            <thead>
+                <tr class="slds-line-height_reset">
+                    <th scope="col">
+                        <input type="checkbox" class="checkbox" onclick="cvCheckAllOrNone(this);" />
+                    </th>
+                    <th scope="col">
+                        <div class="slds-truncate" title="Name">Name</div>
+                    </th>
+                    <th scope="col">
+                        <div class="slds-truncate" title="Phone">Phone</div>
+                    </th>
+                    <th scope="col">
+                        <div class="slds-truncate" title="Email">Email</div>
+                    </th>
+                     <th scope="col">
+                         <div class="slds-truncate" title="Booking">Booking</div>
+                    </th>
+                     <th scope="col">
+                        <div class="slds-truncate" title="Unit">Unit</div>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <apex:repeat value="{!wrapContactList}" var="con">
+                    <tr>
+                        <td>
+                            <input id="{!con.conId}" value="{!con.conId}" title="" type="checkbox" class="checkbox" name="ids" />
+                        </td>
+
+                        <td>
+                            <div class="slds-truncate">{!con.conName}</div>
+                        </td>
+                        <td>
+                            <div class="slds-truncate">{!con.conPhone}</div>
+                        </td>
+                        <td>
+                            <div class="slds-truncate">{!con.conEmail}</div>
+                        </td>
+                         <td>
+                             <div class="slds-truncate"><a href="/{!con.BookingId}">{!con.BookingName}</a></div>
+                        </td>
+                         <td>
+                            <div class="slds-truncate">{!con.Unit}</div>
+                        </td>
+                    </tr>
+                </apex:repeat>
+            </tbody>
+        </table>
+
+        <div class="slds-align_absolute-center slds-m-vertical_x-small">
+            <input type="submit" onclick="return fncheckcontact();" class="slds-button slds-button_brand  slds-m-top_medium" value="Send Bulk SMS"
+            />
+        </div>
+
+    </form>
+
+</apex:page>

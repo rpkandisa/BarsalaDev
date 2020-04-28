@@ -1,0 +1,338 @@
+<apex:page id="pg" tabStyle="Prospective_Building__c" showHeader="true" controller="ProspectiveBuildingConversionController" lightningStyleSheets="true">
+    <apex:includeScript value="{!URLFOR($Resource.SLCA2__jQuery, '/jquery.min.js')}"/>
+
+    <style>
+        /* Extra small devices (phones, 600px and down) */
+        @media only screen and (max-width: 600px) {
+            .tablediv{
+                width: 600px !important;
+            }
+        } 
+
+        /* Small devices (portrait tablets and large phones, 600px and up) */
+        @media only screen and (min-width: 600px) {
+            .tablediv{
+                width: 600px !important;
+            }
+        } 
+
+        /* Medium devices (landscape tablets, 768px and up) */
+        @media only screen and (min-width: 768px) {
+            .tablediv{
+                width: 768px !important;
+            }
+        } 
+
+        /* Large devices (laptops/desktops, 992px and up) */
+        @media only screen and (min-width: 992px) {
+            .tablediv{
+                width: 992px !important;
+            }
+        } 
+
+        /* Extra large devices (large laptops and desktops, 1200px and up) */
+        @media only screen and (min-width: 1200px) {
+            .tablediv{
+                width: {!if($User.UITheme == 'Theme2' || $User.UITheme == 'Theme3', '1160px','1360px')} !important;
+            }
+        }       
+
+        /* Extra large devices (large laptops and desktops, 1200px and up) */
+        @media only screen and (min-width: 1900px) {
+            .tablediv{
+                width: {!if($User.UITheme == 'Theme2' || $User.UITheme == 'Theme3', '1600px','1820px')} !important;
+            }
+        }
+    </style>
+    
+    <script>
+    	$(document).ready(function() {
+    		fixDatePickerPosition();
+    	});
+    	
+    	var previousOnload = window.onload; 
+        window.onload = function() { 
+            if (previousOnload) { 
+                previousOnload(); 
+            } 
+            onLoadInitilization(); 
+        }
+
+        function onLoadInitilization(){
+            var checkboxes = document.getElementsByClassName('approvedUnitChk');
+
+            for(var i = 0; i < checkboxes.length; i++) {
+              (function(index) {
+                checkboxes[index].addEventListener("change", function() {
+                    if(!this.checked)
+                        document.getElementById('pg:frm:pb:tableSection:approvedUnitsTable:checkAll').checked = false;
+                    else{
+                        var checkboxes = document.getElementsByClassName("approvedUnitChk");
+                        var val = true;
+                        for(var i=0;i<checkboxes.length;i++){
+                            if(!checkboxes[i].checked){
+                                val = false;
+                                return;
+                            }
+                        }
+                        document.getElementById('pg:frm:pb:tableSection:approvedUnitsTable:checkAll').checked = val;    
+                    }
+                 })
+              })(i);
+            }
+        }
+        function toggleAll(allChk){
+            var checkboxes = document.getElementsByClassName("approvedUnitChk");
+            for(var i=0;i<checkboxes.length;i++){
+                checkboxes[i].checked = allChk.checked;
+            }
+        }
+        function fixDatePickerPosition(){
+    		$('.dateInput').each(function(i, e){
+			    $(e).attr('onFocus',null);                        
+			});
+
+			$('.dateInput').focus(function (e) {
+			    DatePicker.pickDate(true, $(e.target).attr('id'), false);
+			    /*fixing top position since table has horizontal scrollbar*/
+			    /*var datePickerTop = parseInt($('.datePicker').css('top'),10);
+			    if(!isNaN(datePickerTop)){
+			        $('.datePicker').css('top', (datePickerTop - $j('.tableContainer').scrollTop()) + 'px');
+			    }*/
+
+			    /*fixing left position since table has horizontal scrollbar*/
+			    var datePickerLeft = parseInt($('.datePicker').css('left'),10);
+				if(!isNaN(datePickerLeft)){
+				    $('.datePicker').css('left', (datePickerLeft - $('.tablediv').scrollLeft()) + 'px');
+				}                                
+			});
+    	}
+    </script>
+    <apex:form id="frm">
+        <apex:pageMessages />
+        <apex:pageMessage rendered="{!prosBuilding.Converted_Building__c!=null && approvedUnitsModel.size==0}" summary="No units are available for conversion. Please approve some units to proceed." severity="info" strength="3" />
+        
+        <apex:pageBlock rendered="{!!hasInvalidRequest}" id="pb">
+            <apex:pageBlockButtons >
+                <apex:commandButton value="Convert" disabled="{!prosBuilding.Converted_Building__c!=null && approvedUnitsModel.size==0}" action="{!convertSelectedUnits}" reRender="frm" status="status" oncomplete="onLoadInitilization();fixDatePickerPosition();" />
+                <apex:commandButton value="Cancel" action="{!cancel}" reRender="frm" status="status" immediate="true" />
+            </apex:pageBlockButtons>
+
+            <apex:actionFunction name="updateUnitExternalName" action="{!updateUnitExternalName}" status="status" reRender="frm" immediate="true" >
+                <apex:param assignTo="{!externalName}" id="arg1" name="arg1" value="" />
+            </apex:actionFunction>
+
+            <apex:actionStatus id="status">
+                <apex:facet name="start">
+                    <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.25; z-index: 1000; background-color: black;">
+                        &nbsp;
+                    </div>
+                    <div style="position: fixed; left: 0; top: 0; bottom: 0; right: 0; z-index: 1001; margin: 15% 50%">
+                        <div style="display: inline-block; padding: 2px; background-color: #fff; width: 125px;">
+                            <img src="{!if($User.UITheme == 'Theme2' || $User.UITheme == 'Theme3','/img/loading.gif',URLFOR($Resource.lightning, '/assets/images/spinners/slds_spinner_brand.gif'))} " style="max-width:24px;float: left; margin: 8px;" />
+                            <span style="display: inline-block; padding: 10px 0px;">Please Wait...</span>
+                        </div>
+                    </div>
+                </apex:facet>
+            </apex:actionStatus>
+
+            <apex:pageBlockSection title="Building Details" columns="2" rendered="{!prosBuilding.Converted_Building__c==null}">
+                <apex:inputField value="{!building.Name}" required="true" />
+                <apex:inputField value="{!building.Address__c}" />
+                
+                <apex:inputField value="{!building.External_Name__c}" onchange="updateUnitExternalName(this.value);  return false;" />
+                <apex:inputField value="{!building.City__c}" />
+
+                <apex:inputField value="{!building.Neighborhood__c}" rendered="{!building.Neighborhood__c==null}" />
+                <apex:outputField value="{!building.Neighborhood__c}" rendered="{!building.Neighborhood__c!=null}" />
+                <apex:inputField value="{!building.State__c}" />
+
+                <apex:inputField value="{!building.Default_Min_Stay_Override__c}" />
+                <apex:inputField value="{!building.Zip_code__c}" />
+                
+                
+                <apex:inputField value="{!building.Same_Day_Reservation_End_Time__c}" />
+                <apex:outputPanel />
+
+                <apex:inputField value="{!building.Leasing_Contact__c}" />
+                <apex:outputPanel />
+
+                <apex:inputField value="{!building.Community_Manager_Contact__c}" />
+                <apex:outputPanel />
+                
+                <apex:inputField value="{!building.Asst_Community_Mgr_Contact__c}" />
+                <apex:outputPanel />
+
+                <apex:inputField value="{!building.Amenities__c}" />
+            </apex:pageBlockSection>
+
+            <apex:pageBlockSection title="Converted Building Details" columns="2" rendered="{!prosBuilding.Converted_Building__c!=null}">
+                <apex:outputField value="{!building.Name}" />
+                <apex:outputField value="{!building.Address__c}" />
+                
+                <apex:outputField value="{!building.External_Name__c}" />
+                <apex:outputField value="{!building.City__c}" />
+
+                <apex:outputField value="{!building.Neighborhood__c}" />
+                <apex:outputField value="{!building.State__c}" />
+
+                <apex:outputField value="{!building.Default_Min_Stay_Override__c}" />
+                <apex:outputField value="{!building.Zip_code__c}" />
+
+                <apex:outputField value="{!building.Same_Day_Reservation_End_Time__c}" />
+                <apex:outputPanel />
+
+                <apex:outputField value="{!building.Leasing_Contact__c}" />
+                <apex:outputPanel />
+
+                <apex:outputField value="{!building.Community_Manager_Contact__c}" />
+                <apex:outputPanel />
+                
+                <apex:outputField value="{!building.Asst_Community_Mgr_Contact__c}" />
+                <apex:outputPanel />
+                
+                <apex:outputField value="{!building.Amenities__c}" />
+            </apex:pageBlockSection>
+
+            <apex:pageBlockSection title="Approved Units" columns="1" id="tableSection">
+                <apex:outputPanel style="width:500px;overflow: auto" id="tablediv" styleClass="tablediv" rendered="{!approvedUnitsModel != null && approvedUnitsModel.size>0}" layout="block">
+                    <apex:pageBlockTable styleClass="tableContainer" value="{!approvedUnitsModel}" var="model" id="approvedUnitsTable" >
+                        <apex:column >
+                            <apex:facet name="header">
+                                <apex:inputCheckbox id="checkAll" value="{!selectAllToggle}" onchange="toggleAll(this);" />
+                            </apex:facet>
+                            <apex:inputCheckbox value="{!model.selected}" styleClass="approvedUnitChk" />
+                        </apex:column>
+
+                        <apex:column headerValue="Pros. Unit" value="{!model.prosUnit.Name}" />
+
+                        <apex:column headerValue="{!$ObjectType.Unit__c.Fields.Name.Label}">
+                            <apex:inputField value="{!model.unit.Name}" />
+                        </apex:column>
+
+                        <apex:column headerValue="{!$ObjectType.Unit__c.Fields.Unit__c.Label}">
+                            <apex:inputField value="{!model.unit.Unit__c}" />
+                        </apex:column>
+
+                        <apex:column headerValue="{!$ObjectType.Unit__c.Fields.Airbnb_listing_name__c.Label}">
+                            <apex:inputField value="{!model.unit.Airbnb_listing_name__c}" />
+                        </apex:column>
+                        <apex:column headerValue="{!$ObjectType.Unit__c.Fields.Bathroom__c.Label}">
+                            <apex:inputField value="{!model.unit.Bathroom__c}" />
+                        </apex:column>
+                        <apex:column headerValue="{!$ObjectType.Unit__c.Fields.Bedrooms__c.Label}">
+                            <apex:inputField value="{!model.unit.Bedrooms__c}" />
+                        </apex:column>
+                        <apex:column headerValue="{!$ObjectType.Unit__c.Fields.Beds__c.Label}">
+                            <apex:inputField value="{!model.unit.Beds__c}" />
+                        </apex:column>
+                        <apex:column headerValue="{!$ObjectType.Unit__c.Fields.Bed_Size__c.Label}">
+                            <apex:inputField value="{!model.unit.Bed_Size__c}" />
+                        </apex:column>
+                        <apex:column headerValue="{!$ObjectType.Unit__c.Fields.Unit_set__c.Label}">
+                            <apex:selectList required="true" size="1" value="{!model.unit.Unit_set__c}">
+                                <apex:selectOptions value="{!unitSetOptions}"/>
+                            </apex:selectList>
+                        </apex:column>
+                        <apex:column headerValue="{!$ObjectType.Unit__c.Fields.Unit_Size_sq_ft__c.Label}">
+                            <apex:inputField value="{!model.unit.Unit_Size_sq_ft__c}" />
+                        </apex:column>
+                        
+                        
+                        <apex:column headerValue="{!$ObjectType.Unit__c.Fields.Lease_Security_Deposit__c.Label}">
+                            <apex:inputField value="{!model.unit.Lease_Security_Deposit__c}" />
+                        </apex:column>
+                        <apex:column headerValue="{!$ObjectType.Unit__c.Fields.Unit_Rent_Cost__c.Label}">
+                            <apex:inputField value="{!model.unit.Unit_Rent_Cost__c}" />
+                        </apex:column>
+
+                        <apex:column headerValue="{!$ObjectType.Unit__c.Fields.Base_price__c.Label}">
+                            <apex:inputField value="{!model.unit.Base_price__c}" />
+                        </apex:column>
+                        <apex:column headerValue="{!$ObjectType.Unit__c.Fields.Min_price__c.Label}">
+                            <apex:inputField value="{!model.unit.Min_price__c}" />
+                        </apex:column>
+                        
+                        <apex:column headerValue="{!$ObjectType.Unit__c.Fields.Access_Code__c.Label}">
+                            <apex:inputField value="{!model.unit.Access_Code__c}" />
+                        </apex:column>
+                        <apex:column headerValue="{!$ObjectType.Unit__c.Fields.Airbnb_ID__c.Label}">
+                            <apex:inputField value="{!model.unit.Airbnb_ID__c}" />
+                        </apex:column>
+
+                        <apex:column headerValue="{!$ObjectType.Unit__c.Fields.Lease_Start_Date__c.Label}">
+                            <apex:inputField styleClass="dateInput" value="{!model.unit.Lease_Start_Date__c}" />
+                        </apex:column>
+                        <apex:column headerValue="{!$ObjectType.Unit__c.Fields.Lease_End_Date__c.Label}">
+                            <apex:inputField styleClass="dateInput" value="{!model.unit.Lease_End_Date__c}" />
+                        </apex:column>
+                        <apex:column headerValue="{!$ObjectType.Unit__c.Fields.Start_Date__c.Label}">
+                            <apex:inputField styleClass="dateInput" value="{!model.unit.Start_Date__c}" />
+                        </apex:column>
+                        <apex:column headerValue="{!$ObjectType.Unit__c.Fields.End_Date__c.Label}">
+                            <apex:inputField styleClass="dateInput" value="{!model.unit.End_Date__c}" />
+                        </apex:column>
+                    </apex:pageBlockTable>
+                </apex:outputPanel>
+
+                <apex:outputPanel rendered="{!approvedUnitsModel == null || approvedUnitsModel.size==0}">
+                    <table class="list" border="0" cellspacing="0" cellpadding="0">
+                        <tbody>
+                            <tr class="headerRow">
+                                <th scope="col" class="noRowsHeader">No records to display</th>
+                            </tr>
+                        </tbody>
+                    </table>
+                </apex:outputPanel>
+            </apex:pageBlockSection>
+
+            <apex:pageBlockSection title="Other Units" columns="1">
+                <apex:pageBlockTable value="{!otherUnits}" var="unit" rendered="{!otherUnits != null && otherUnits.size>0}">
+                    <apex:column value="{!unit.Name}" />
+                    <apex:column value="{!unit.Status__c}" />
+                    <apex:column value="{!unit.Quoted_Rent__c}" />
+                    <apex:column value="{!unit.Date_Available__c}" />
+                    <apex:column value="{!unit.Move_In_Date__c}" />
+                    <apex:column value="{!unit.Move_In_Amount__c}" />
+                    <apex:column value="{!unit.City__c}" />
+                    <apex:column value="{!unit.Lease_Expiration__c}" />
+                    <apex:column value="{!unit.Lease_Term__c}" />
+                </apex:pageBlockTable>
+
+                <apex:outputPanel rendered="{!otherUnits == null || otherUnits.size==0}">
+                    <table class="list" border="0" cellspacing="0" cellpadding="0">
+                        <tbody>
+                            <tr class="headerRow">
+                                <th scope="col" class="noRowsHeader">No records to display</th>
+                            </tr>
+                        </tbody>
+                    </table>
+                </apex:outputPanel>
+            </apex:pageBlockSection>
+
+            <apex:pageBlockSection title="Converted Units" columns="1">
+                <apex:pageBlockTable value="{!convertedUnits}" var="unit" rendered="{!convertedUnits != null && convertedUnits.size>0}">
+                    <apex:column value="{!unit.Name}" />
+                    <apex:column value="{!unit.Status__c}" />
+                    <apex:column value="{!unit.Quoted_Rent__c}" />
+                    <apex:column value="{!unit.Date_Available__c}" />
+                    <apex:column value="{!unit.Move_In_Date__c}" />
+                    <apex:column value="{!unit.Move_In_Amount__c}" />
+                    <apex:column value="{!unit.City__c}" />
+                    <apex:column value="{!unit.Lease_Expiration__c}" />
+                    <apex:column value="{!unit.Lease_Term__c}" />
+                </apex:pageBlockTable>
+
+                <apex:outputPanel rendered="{!convertedUnits == null || convertedUnits.size==0}">
+                    <table class="list" border="0" cellspacing="0" cellpadding="0">
+                        <tbody>
+                            <tr class="headerRow">
+                                <th scope="col" class="noRowsHeader">No records to display</th>
+                            </tr>
+                        </tbody>
+                    </table>
+                </apex:outputPanel>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

@@ -1,0 +1,14 @@
+<apex:page standardController="Account" showHeader="true" sidebar="true">
+
+    <form id="scan-form" action="https://barsala--stage--smagicinteract.visualforce.com/apex/bulksms_contact" method="post" 
+            target="_blank" charset="UTF-8" enctype="application/x-www-form-urlencoded">
+
+        <fieldset>
+        <input id="003M0000016L0ob" value="003M0000016L0ob" title="" type="checkbox" class="checkbox" name="ids" />
+            <input type="checkbox" class="checkbox" name="ids" id="003M0000016L6f8IAC" value="003M0000016L6f8IAC" />
+            <input type="checkbox" class="checkbox" name="ids" id="003M0000016ZAEVIA4" value="003M0000016ZAEVIA4" />
+           
+            <input type="submit" value="Search" />
+        </fieldset>
+    </form>
+</apex:page>

@@ -1,0 +1,53 @@
+<apex:page sideBar="false" showHeader="true" cache="false">
+   <div style="position:relative;height:500px;" id="CA_INSIDE">
+   <script>
+       var fStartFunc = function(oAPI) {
+           oAPI.setFunc('externalLink', function(sId, oEvt){
+               var bCommunity = document.location.href.indexOf('owner') > 0;
+               if (!bCommunity){
+                   window.open('/' + sId);
+               } else {
+                   window.open('/owner/' + sId);
+               }
+               return false; 
+           });
+           
+           
+           jQuery(window).on('resize.CA', function(){
+               var nH = jQuery('.bodyDiv').height() - 50;
+               jQuery('#CA_INSIDE').css({
+                   "min-height" : nH + 'px'
+               });
+               jQuery('#bodyTable').css('height', nH + 'px'); 
+               
+           });
+           
+           jQuery(window).trigger('resize.CA');
+       }
+   </script>
+ 
+<SLCA2:calendar date="" 
+   view="swimlane" 
+   filter="{}" 
+   calendar="a111Q000009KC5oQAG"
+   settings="[]"
+   userAdditionalSettings="{'swimlaneDefaultPeriod':'day','swimlaneDefaultGroupBy':'unit__c'}"
+   urlparams="site=1&url=/owner/[id]"
+   namespace="SLCA2"
+   readonly="{
+       edit            : true, 
+       create          : true, 
+       detail          : true, 
+       move            : true, 
+       hover           : true, 
+       contextEvent    : true, 
+       contextCalendar : true, 
+       contextArea     : true
+   }"
+   func="{
+       ready : fStartFunc
+   }"
+   
+></SLCA2:calendar>
+</div>
+</apex:page>

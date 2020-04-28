@@ -1,0 +1,43 @@
+<apex:component controller="ShowBookingsController" access="global">
+    <apex:attribute name="objpersonaccount" description="Person Account" type="Account" required="required" />
+        <apex:attribute name="objcontact" description="Contact" type="Contact" required="required" />
+
+     <apex:attribute type="Id" assignTo="{!AccId}" name="AccRecordID" description="Account Id" required="required" />
+    <style type="text/css">
+        .dollars:before { content:'$'; }
+    </style>
+    <p style="margin-left: 30px;font-size: larger;">Hi {!objpersonaccount.PersonContact.name},</p>
+    
+    <p style="margin-left: 30px;font-size: larger;">Congrats! You've earned ${!TotalAmount} this period, you should be receiving that within the next 1-2 business days.
+        
+    </p>
+    <p style="margin-left: 80px;font-size: initial;">
+        The following bookings didn't get approved for the following reasons: 
+    </p>
+    <table  style=" text-align: center;margin-top: 20px;  border-collapse: collapse; border: 1px solid black;" align="center">
+        <tr> 
+            <th style="border: 1px solid black;text-align: center;padding-left: 10px;padding-right: 10px;">Billing Contact Name</th>
+            <th style="border: 1px solid black;text-align: center;padding-left: 10px;padding-right: 10px;">Billing Contact Phone</th>
+            <th style="border: 1px solid black;text-align: center;padding-left: 10px;padding-right: 10px;">Booking Start Date</th>
+            <th style="border: 1px solid black;text-align: center;padding-left: 10px;padding-right: 10px;">Booking End Date</th>
+            <th style="border: 1px solid black;text-align: center;padding-left: 10px;padding-right: 10px;">Unit Name</th>
+            <th style="border: 1px solid black;text-align: center;padding-left: 10px;padding-right: 10px;">Booking Commission Rejection Reason</th>
+        </tr>
+        <apex:repeat value="{!BookingDetails}" var="book">
+            <tr>
+                <td style="border: 1px solid black;text-align: center;padding-left: 10px;padding-right: 10px;">{!book.ContactName}</td>
+                <td style="border: 1px solid black;text-align: center;padding-left: 10px;padding-right: 10px;">{!book.ContactPhone}</td>
+                <td style="border: 1px solid black;text-align: center;padding-left: 10px;padding-right: 10px;">{!book.startDate}</td>
+                <td style="border: 1px solid black;text-align: center;padding-left: 10px;padding-right: 10px;">{!book.endDate}</td>
+                <td style="border: 1px solid black;text-align: center;padding-left: 10px;padding-right: 10px;">{!book.unitName}</td>
+                <td style="border: 1px solid black;text-align: center;padding-left: 10px;padding-right: 10px;">{!book.rejectionReason}</td>
+            </tr>
+            
+        </apex:repeat>
+    </table>
+    
+    <p style="margin-left: 30px;font-size: larger;">If you have any questions regarding this period's review, please reach out to {!$User.FirstName} {!$User.LastName}.</p>
+
+    <p style="margin-left: 30px;font-size: larger;">Thanks,</p>
+    <p style="margin-left: 30px;font-size: larger;">Barsala</p>
+</apex:component>
