@@ -105,12 +105,13 @@ public class SendBulkSMSFromBuildingControllerTest {
         objbooking.Email__c = 'testrp@barsala.com';
         objbooking.Phone_number__c = '9898989898';
         objbooking.Start_date__c = system.now().addDays(-5);
-        objbooking.End_date__c = system.now().addDays(5);
+        objbooking.End_date__c = system.now().addDays(10);
         objbooking.Product__c = u.id;
         objbooking.Billing_Contact__c = objacc.PersonContactId;
         objBooking.Discount__c = 10;
         objBooking.Sub_Total__c = 50;
-        objBooking.Total_taxed__c = 2;
+        objBooking.Total_taxed__c = 2; 
+        objBooking.Guest_Contact__c = objcon.id;
         objBooking.Billing_Contact__c = objcon.id;
         objBooking.Status__c = 'Active';
         insert objbooking;
@@ -120,7 +121,8 @@ public class SendBulkSMSFromBuildingControllerTest {
         pageRef.getParameters().put('Id', b.Id);
         Test.setCurrentPage(pageRef);
         ApexPages.StandardController sc = new ApexPages.StandardController(b);
-        SendBulkSMSFromBuildingController sendSMS = new SendBulkSMSFromBuildingController(sc); 
+        SendBulkSMSFromBuildingController sendSMS = new SendBulkSMSFromBuildingController(sc);
+        
         sendSMS.selectedContacts();
        
         

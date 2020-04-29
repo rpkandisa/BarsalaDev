@@ -1,0 +1,9 @@
+<apex:page showHeader="false" standardController="Account">
+<apex:includeLightning rendered="true"/> 
+<div id="lightning" />
+<script> var recordId = "{!$CurrentPage.parameters.id}"; 
+$Lightning.use( "smagicinteract:conversationApp", function()
+{ $Lightning.createComponent( "smagicinteract:conversations", 
+{ recordId : recordId,
+embedContext : "detail", uiContext : "classic" },
+"lightning", function(cmp) { } ); } ); </script></apex:page>

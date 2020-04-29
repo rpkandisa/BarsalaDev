@@ -3013,8 +3013,7 @@ public without sharing class UnitBookingController {
     Stripe_Setting__c stripeSetting = Stripe_Setting__c.getORGDefaults();
 
     for (Xotelia_Booking__c objb : rm.bookings) {
-
-      if(!isAllCharege && bookingids.size()>0){
+      if (!isAllCharege && bookingids.size() > 0) {
         continue;
       }
 
@@ -3038,6 +3037,9 @@ public without sharing class UnitBookingController {
           book.Email__c,
           'Barsala Reservation'
         );
+
+        system.debug('strResponseBody##### ' + httpModel.response);
+
         //If there is exception in callout, then showing error
         if (httpModel.isCalloutException) {
           rm.errMsgs.add(httpModel.response);
@@ -3047,6 +3049,9 @@ public without sharing class UnitBookingController {
           StripeHelper.StripeChargeParser charge = StripeHelper.parseStripeCharge(
             httpModel.response
           );
+          system.debug('strResponseBody##### ' + charge.outcome);
+          system.debug('strResponseBody##### ' + charge);
+
           if (charge != null) {
             if (charge.paid != null && charge.paid) {
               pymt = new Payment__c(
@@ -3059,6 +3064,20 @@ public without sharing class UnitBookingController {
                   '/payments/' +
                   charge.id
               );
+
+              //added outcome fields
+              StripeHelper.cls_outcome objoutcome = new StripeHelper.cls_outcome();
+              objoutcome = charge.outcome;
+              if (objoutcome != null) {
+                pymt.Network_Status__c = objoutcome.network_status;
+                pymt.Seller_Message__c = objoutcome.seller_message;
+                pymt.Type__c = objoutcome.type;
+                pymt.Risk_Level__c = objoutcome.risk_level;
+                if (String.isnotblank(objoutcome.risk_score)) {
+                  pymt.Risk_Score__c = Integer.valueof(objoutcome.risk_score);
+                }
+              }
+
               lstpymt.add(pymt);
             } else {
               todeletebookingids.add(objb.Id);

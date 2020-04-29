@@ -864,5 +864,9 @@ private class UnitBookingControllerTest {
 
     UnitBookingController.findTaskByContactId(c.Id);
     UnitBookingController.findAllLeadSource();
+    StripeHelper.codecoveragetest();
+    StripeHelper.codecoveragetest4();
+    StripeHelper.codecoveragetest2();
+    StripeHelper.codecoveragetest3();
   }
 }

@@ -3,10 +3,5 @@
     <apiVersion>40.0</apiVersion>
     <availableInTouch>true</availableInTouch>
     <confirmationTokenRequired>false</confirmationTokenRequired>
-    <label>Single SMS Booking</label>
-    <packageVersions>
-        <majorNumber>1</majorNumber>
-        <minorNumber>60</minorNumber>
-        <namespace>smagicinteract</namespace>
-    </packageVersions>
+    <label>Consent List Booking</label>
 </ApexPage>

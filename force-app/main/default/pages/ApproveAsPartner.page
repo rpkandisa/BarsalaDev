@@ -1,0 +1,57 @@
+<apex:page standardController="Account" extensions="ApproveAsPartnerController">
+    <apex:slds />
+    <apex:sectionHeader title="Approve as Partner" subtitle="{!Account.Name}" />
+    <style>
+        table.messageTable tr td:first-child {
+            width: 40px;
+        }
+    </style>
+    <apex:form id="frm">
+        <apex:actionFunction name="accountrecordupdate" action="{!updateAccountRecord}" rerender="frm" status="loading" oncomplete="fnredirect()"
+        />
+
+        <apex:pageBlock title="Approve as Partner">
+            <apex:pageBlockButtons location="top">
+                <apex:commandButton value="Back" action="{!cancel}" immediate="false" />
+            </apex:pageBlockButtons>
+
+            <apex:pageBlockSection columns="1">
+                <apex:pageblockSectionItem >
+                    <apex:pageMessages escape="false" />
+                </apex:pageblockSectionItem>
+
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+
+
+        <script>
+            function fnredirect() {
+                if ('{!bnlActivate}' == 'true') {
+                    setTimeout(function () {
+                        window.location.href = '/{!AccountId}';
+                    }, 2000);
+                }
+            }
+        </script>
+
+
+    </apex:form>
+
+    <script>
+        window.setTimeout(accountrecordupdate, 200);
+    </script>
+    <apex:actionStatus id="loading">
+        <apex:facet name="start">
+            <div style="z-index: 1000; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: black; opacity: 0.25">
+
+            </div>
+            <div style="z-index: 1001; text-align: center; vertical-align: middle; position: fixed; top: 50%; left: 50%; padding: 1em; margin: -2em -10em; width: 20em; height: 32px; background: white; border-radius: 5px">
+                <img src="/img/loading32.gif" style="vertical-align: middle; padding-right: 1em" /> Loading...
+            </div>
+        </apex:facet>
+    </apex:actionStatus>
+    <script>
+        loadPageContent();
+    </script>
+
+</apex:page>

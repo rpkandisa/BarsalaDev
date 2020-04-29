@@ -1,4 +1,4 @@
-public without sharing class SendBulkSMSFromBuildingController {
+public with sharing class SendBulkSMSFromBuildingController {
     public List<wrapContact> wrapContactList {get; set;}
     public List<wrapContact> selectedContact{get;set;}
     
@@ -11,8 +11,9 @@ public without sharing class SendBulkSMSFromBuildingController {
             builId = builId.substring(0,builId.length()-3);  
         }
         system.debug('buildingId :'+buildingId);
+        system.debug('builId :'+builId);
         Datetime todaydt = system.now();
-        List<Xotelia_Booking__c> bookingList = [SELECT id,name,Building_Id__c,Status__c,Guest_Contact__r.Name,Guest_Contact__r.Phone,Guest_Contact__r.Email,Unit__c FROM Xotelia_Booking__c WHERE 
+        List<Xotelia_Booking__c> bookingList = [SELECT id,name,Building_Id__c,Start_date__c,End_date__c,Status__c,Guest_Contact__r.Name,Guest_Contact__r.Phone,Guest_Contact__r.Email,Unit__c FROM Xotelia_Booking__c WHERE 
                                                 Building_Id__c =:builId AND 
                                                 Status__c ='Active' AND 
                                                 Guest_Contact__c != null AND
@@ -58,6 +59,7 @@ public without sharing class SendBulkSMSFromBuildingController {
         public Boolean isSelected {get; set;}
         public String Unit {get; set;}
         
+       
         
     }  
     

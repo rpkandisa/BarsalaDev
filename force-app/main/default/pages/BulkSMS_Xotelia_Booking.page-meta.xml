@@ -6,7 +6,7 @@
     <label>Bulk SMS Booking</label>
     <packageVersions>
         <majorNumber>1</majorNumber>
-        <minorNumber>55</minorNumber>
+        <minorNumber>60</minorNumber>
         <namespace>smagicinteract</namespace>
     </packageVersions>
 </ApexPage>
